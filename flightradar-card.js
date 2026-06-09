@@ -111,8 +111,17 @@ class FlightRadarCardEditor extends HTMLElement {
   }
 }
 
-// Compact card uses the same editor schema (no mode toggle needed).
-class FlightRadarCardCompactEditor extends FlightRadarCardEditor {}
+// Compact card editor — same fields as the normal card plus tap_action.
+class FlightRadarCardCompactEditor extends FlightRadarCardEditor {
+  _schema() {
+    return [
+      { name: 'entity',       required: true, selector: { entity: { domain: 'sensor' } } },
+      { name: 'title',                        selector: { text: {} } },
+      { name: 'home_airport',                 selector: { text: {} } },
+      { name: 'tap_action',                   selector: { 'ui-action': {} } },
+    ];
+  }
+}
 
 customElements.define('flightradar-card-editor', FlightRadarCardEditor);
 customElements.define('flightradar-card-compact-editor', FlightRadarCardCompactEditor);
@@ -391,7 +400,7 @@ class FlightRadarCardCompact extends FlightRadarCard {
   static getConfigElement() { return document.createElement('flightradar-card-compact-editor'); }
 
   static getGridOptions() {
-    return { columns: 12, rows: 1, min_columns: 6, min_rows: 1 };
+    return { columns: 6, rows: 1, min_columns: 6, min_rows: 1 };
   }
 
   static getStubConfig() {
@@ -411,10 +420,10 @@ class FlightRadarCardCompact extends FlightRadarCard {
       <div class="citem">
         <ha-icon icon="${this._flightIcon(f)}" class="icon-primary cicon"></ha-icon>
         <span class="cflight">${f.flight_number || '—'}</span>
-        <span class="ciata">${f.airport_origin_iata || '—'}</span>
+        <span class="ciata">${f.airport_origin_iata || f.airport_origin_city || '—'}</span>
         ${this._flag(f.airport_origin_country_code)}
         <ha-icon icon="mdi:arrow-right" class="carrow"></ha-icon>
-        <span class="ciata">${f.airport_destination_iata || '—'}</span>
+        <span class="ciata">${f.airport_destination_iata || f.airport_destination_city || '—'}</span>
         ${this._flag(f.airport_destination_country_code)}
         <span class="cbadge">${f.airline_short || ''}</span>
       </div>`;
@@ -428,13 +437,13 @@ class FlightRadarCardCompact extends FlightRadarCard {
     let body;
     if (!stateObj) {
       body = `
-        <div class="empty">
+        <div class="cempty">
           <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
-          <span>${this._t('card.entity_not_found')}:<br/><code>${this.config.entity}</code></span>
+          <span>${this._t('card.entity_not_found')}: <code>${this.config.entity}</code></span>
         </div>`;
     } else if (flights.length === 0) {
       body = `
-        <div class="empty">
+        <div class="cempty">
           <ha-icon icon="mdi:airplane-off"></ha-icon>
           <span>${this._t('card.no_flights')}</span>
         </div>`;
@@ -466,14 +475,14 @@ class FlightRadarCardCompact extends FlightRadarCard {
 
       .cheader {
         display: flex; align-items: center; gap: 6px;
-        padding: 7px 12px 3px;
+        padding: 6px 12px 0;
         font-size: 11px; font-weight: 500;
         color: var(--secondary-text-color);
         text-transform: uppercase; letter-spacing: 0.6px;
       }
       .cheader ha-icon { color: var(--primary-color); --mdc-icon-size: 14px; }
 
-      .ccontent { padding: 0 12px 7px; }
+      .ccontent { padding: 0 12px 5px; }
 
       .cflights {
         display: flex;
@@ -488,7 +497,7 @@ class FlightRadarCardCompact extends FlightRadarCard {
         align-items: center;
         gap: 4px;
         white-space: nowrap;
-        padding: 4px 12px 4px 0;
+        padding: 3px 12px 3px 0;
         margin-right: 12px;
         border-right: 1px solid var(--divider-color);
       }
@@ -510,6 +519,15 @@ class FlightRadarCardCompact extends FlightRadarCard {
       @container (max-width: 460px) {
         .cbadge { display: none; }
       }
+
+      /* Compact single-line empty/error state */
+      .cempty {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 0;
+        font-size: 12px; color: var(--secondary-text-color);
+      }
+      .cempty ha-icon { --mdc-icon-size: 14px !important; opacity: 0.5; flex-shrink: 0; }
+      .cempty code    { font-size: 11px; }
     `;
   }
 }
