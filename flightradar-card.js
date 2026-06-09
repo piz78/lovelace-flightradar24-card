@@ -111,8 +111,17 @@ class FlightRadarCardEditor extends HTMLElement {
   }
 }
 
-// Compact card uses the same editor schema (no mode toggle needed).
-class FlightRadarCardCompactEditor extends FlightRadarCardEditor {}
+// Compact card editor — same fields as the normal card plus tap_action.
+class FlightRadarCardCompactEditor extends FlightRadarCardEditor {
+  _schema() {
+    return [
+      { name: 'entity',       required: true, selector: { entity: { domain: 'sensor' } } },
+      { name: 'title',                        selector: { text: {} } },
+      { name: 'home_airport',                 selector: { text: {} } },
+      { name: 'tap_action',                   selector: { 'ui-action': {} } },
+    ];
+  }
+}
 
 customElements.define('flightradar-card-editor', FlightRadarCardEditor);
 customElements.define('flightradar-card-compact-editor', FlightRadarCardCompactEditor);
@@ -391,7 +400,7 @@ class FlightRadarCardCompact extends FlightRadarCard {
   static getConfigElement() { return document.createElement('flightradar-card-compact-editor'); }
 
   static getGridOptions() {
-    return { columns: 12, rows: 1, min_columns: 6, min_rows: 1 };
+    return { columns: 6, rows: 1, min_columns: 6, min_rows: 1 };
   }
 
   static getStubConfig() {
@@ -411,10 +420,10 @@ class FlightRadarCardCompact extends FlightRadarCard {
       <div class="citem">
         <ha-icon icon="${this._flightIcon(f)}" class="icon-primary cicon"></ha-icon>
         <span class="cflight">${f.flight_number || '—'}</span>
-        <span class="ciata">${f.airport_origin_iata || '—'}</span>
+        <span class="ciata">${f.airport_origin_iata || f.airport_origin_city || '—'}</span>
         ${this._flag(f.airport_origin_country_code)}
         <ha-icon icon="mdi:arrow-right" class="carrow"></ha-icon>
-        <span class="ciata">${f.airport_destination_iata || '—'}</span>
+        <span class="ciata">${f.airport_destination_iata || f.airport_destination_city || '—'}</span>
         ${this._flag(f.airport_destination_country_code)}
         <span class="cbadge">${f.airline_short || ''}</span>
       </div>`;
