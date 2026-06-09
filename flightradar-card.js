@@ -420,10 +420,10 @@ class FlightRadarCardCompact extends FlightRadarCard {
       <div class="citem">
         <ha-icon icon="${this._flightIcon(f)}" class="icon-primary cicon"></ha-icon>
         <span class="cflight">${f.flight_number || '—'}</span>
-        <span class="ciata">${f.airport_origin_iata || f.airport_origin_city || '—'}</span>
+        <span class="ciata">${f.airport_origin_iata || ''}</span>
         ${this._flag(f.airport_origin_country_code)}
         <ha-icon icon="mdi:arrow-right" class="carrow"></ha-icon>
-        <span class="ciata">${f.airport_destination_iata || f.airport_destination_city || '—'}</span>
+        <span class="ciata">${f.airport_destination_iata || ''}</span>
         ${this._flag(f.airport_destination_country_code)}
         <span class="cbadge">${f.airline_short || ''}</span>
       </div>`;
@@ -515,9 +515,15 @@ class FlightRadarCardCompact extends FlightRadarCard {
         padding: 1px 7px; border-radius: 20px;
       }
 
-      /* Hide airline badge when card width is below ~6 columns */
-      @container (max-width: 460px) {
+      /* Progressive disclosure as card width shrinks:
+         >560px : IATA code + flag + airline badge (full)
+         420–560px : IATA code + flag              (no badge)
+         <420px  : flag only                       (no code, no badge) */
+      @container (max-width: 560px) {
         .cbadge { display: none; }
+      }
+      @container (max-width: 420px) {
+        .ciata { display: none; }
       }
 
       /* Compact single-line empty/error state */

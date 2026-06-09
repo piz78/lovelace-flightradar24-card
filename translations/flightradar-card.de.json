@@ -3,7 +3,6 @@
     "entity":       "Entity",
     "title":        "Kartentitel",
     "home_airport": "Heimflughafen",
-    "compact":      "Kompaktansicht",
     "tap_action":   "Tippen-Aktion"
   },
   "editor_helper": {

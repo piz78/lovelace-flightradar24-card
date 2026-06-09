@@ -3,7 +3,6 @@
     "entity":       "Entità",
     "title":        "Titolo della scheda",
     "home_airport": "Aeroporto di casa",
-    "compact":      "Vista compatta",
     "tap_action":   "Azione al tocco"
   },
   "editor_helper": {

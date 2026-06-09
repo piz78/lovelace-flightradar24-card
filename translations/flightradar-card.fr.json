@@ -3,7 +3,6 @@
     "entity":       "Entité",
     "title":        "Titre de la carte",
     "home_airport": "Aéroport local",
-    "compact":      "Vue compacte",
     "tap_action":   "Action au toucher"
   },
   "editor_helper": {

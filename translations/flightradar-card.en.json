@@ -3,7 +3,6 @@
     "entity":       "Entity",
     "title":        "Card title",
     "home_airport": "Home airport",
-    "compact":      "Compact view",
     "tap_action":   "Tap action"
   },
   "editor_helper": {
