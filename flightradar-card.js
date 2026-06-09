@@ -383,11 +383,16 @@ class FlightRadarCard extends HTMLElement {
 
 // ── Compact Card ──────────────────────────────────────────────────────────────
 //
-// Standalone compact variant — always renders the compact list view.
+// Standalone compact variant — single-line flights in a horizontal flex layout.
+// Fits into rows: 1 at full width; wraps gracefully at narrower sizes.
 // Use as: type: custom:flightradar-card-compact
 
 class FlightRadarCardCompact extends FlightRadarCard {
   static getConfigElement() { return document.createElement('flightradar-card-compact-editor'); }
+
+  static getGridOptions() {
+    return { columns: 12, rows: 1, min_columns: 6, min_rows: 1 };
+  }
 
   static getStubConfig() {
     return {
@@ -398,10 +403,115 @@ class FlightRadarCardCompact extends FlightRadarCard {
   }
 
   getCardSize() {
-    return Math.max(1, Math.ceil(this._getFlights().length / 2));
+    return Math.max(1, Math.ceil(this._getFlights().length / 3));
   }
 
-  _useCompact() { return true; }
+  _renderFlightItem(f) {
+    return `
+      <div class="citem">
+        <ha-icon icon="${this._flightIcon(f)}" class="icon-primary cicon"></ha-icon>
+        <span class="cflight">${f.flight_number || '—'}</span>
+        <span class="ciata">${f.airport_origin_iata || '—'}</span>
+        ${this._flag(f.airport_origin_country_code)}
+        <ha-icon icon="mdi:arrow-right" class="carrow"></ha-icon>
+        <span class="ciata">${f.airport_destination_iata || '—'}</span>
+        ${this._flag(f.airport_destination_country_code)}
+        <span class="cbadge">${f.airline_short || ''}</span>
+      </div>`;
+  }
+
+  _render() {
+    const flights  = this._getFlights();
+    const title    = this.config.title || this._t('card.title_default');
+    const stateObj = this._hass?.states[this.config.entity];
+
+    let body;
+    if (!stateObj) {
+      body = `
+        <div class="empty">
+          <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
+          <span>${this._t('card.entity_not_found')}:<br/><code>${this.config.entity}</code></span>
+        </div>`;
+    } else if (flights.length === 0) {
+      body = `
+        <div class="empty">
+          <ha-icon icon="mdi:airplane-off"></ha-icon>
+          <span>${this._t('card.no_flights')}</span>
+        </div>`;
+    } else {
+      body = `<div class="cflights">${flights.map(f => this._renderFlightItem(f)).join('')}</div>`;
+    }
+
+    this.shadowRoot.innerHTML = `<style>${this._css()}</style>
+      <ha-card>
+        <div class="cheader">
+          <ha-icon icon="mdi:radar"></ha-icon>
+          <span>${title}</span>
+        </div>
+        <div class="ccontent">${body}</div>
+      </ha-card>`;
+
+    const card      = this.shadowRoot.querySelector('ha-card');
+    const hasAction = this.config.tap_action?.action && this.config.tap_action.action !== 'none';
+    if (card) {
+      card.removeEventListener('click', this._tapHandler);
+      card.style.cursor = hasAction ? 'pointer' : '';
+      if (hasAction) card.addEventListener('click', this._tapHandler);
+    }
+  }
+
+  _css() {
+    return super._css() + `
+      ha-card { container-type: inline-size; }
+
+      .cheader {
+        display: flex; align-items: center; gap: 6px;
+        padding: 7px 12px 3px;
+        font-size: 11px; font-weight: 500;
+        color: var(--secondary-text-color);
+        text-transform: uppercase; letter-spacing: 0.6px;
+      }
+      .cheader ha-icon { color: var(--primary-color); --mdc-icon-size: 14px; }
+
+      .ccontent { padding: 0 12px 7px; }
+
+      .cflights {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        row-gap: 0;
+        column-gap: 0;
+      }
+
+      .citem {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+        padding: 4px 12px 4px 0;
+        margin-right: 12px;
+        border-right: 1px solid var(--divider-color);
+      }
+      .citem:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+
+      .cicon   { --mdc-icon-size: 15px !important; flex-shrink: 0; }
+      .cflight { font-size: 13px; font-weight: 600; }
+      .ciata   { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+      .carrow  { color: var(--secondary-text-color); --mdc-icon-size: 12px !important; flex-shrink: 0; }
+
+      .cbadge {
+        font-size: 10px; white-space: nowrap;
+        color: var(--primary-color);
+        background: rgba(var(--rgb-primary-color, 3,169,244), 0.12);
+        padding: 1px 7px; border-radius: 20px;
+      }
+
+      /* Hide airline badge when card width is below ~6 columns */
+      @container (max-width: 460px) {
+        .cbadge { display: none; }
+      }
+    `;
+  }
 }
 
 
