@@ -437,13 +437,13 @@ class FlightRadarCardCompact extends FlightRadarCard {
     let body;
     if (!stateObj) {
       body = `
-        <div class="empty">
+        <div class="cempty">
           <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
-          <span>${this._t('card.entity_not_found')}:<br/><code>${this.config.entity}</code></span>
+          <span>${this._t('card.entity_not_found')}: <code>${this.config.entity}</code></span>
         </div>`;
     } else if (flights.length === 0) {
       body = `
-        <div class="empty">
+        <div class="cempty">
           <ha-icon icon="mdi:airplane-off"></ha-icon>
           <span>${this._t('card.no_flights')}</span>
         </div>`;
@@ -475,14 +475,14 @@ class FlightRadarCardCompact extends FlightRadarCard {
 
       .cheader {
         display: flex; align-items: center; gap: 6px;
-        padding: 7px 12px 3px;
+        padding: 6px 12px 0;
         font-size: 11px; font-weight: 500;
         color: var(--secondary-text-color);
         text-transform: uppercase; letter-spacing: 0.6px;
       }
       .cheader ha-icon { color: var(--primary-color); --mdc-icon-size: 14px; }
 
-      .ccontent { padding: 0 12px 7px; }
+      .ccontent { padding: 0 12px 5px; }
 
       .cflights {
         display: flex;
@@ -497,7 +497,7 @@ class FlightRadarCardCompact extends FlightRadarCard {
         align-items: center;
         gap: 4px;
         white-space: nowrap;
-        padding: 4px 12px 4px 0;
+        padding: 3px 12px 3px 0;
         margin-right: 12px;
         border-right: 1px solid var(--divider-color);
       }
@@ -519,6 +519,15 @@ class FlightRadarCardCompact extends FlightRadarCard {
       @container (max-width: 460px) {
         .cbadge { display: none; }
       }
+
+      /* Compact single-line empty/error state */
+      .cempty {
+        display: flex; align-items: center; gap: 6px;
+        padding: 3px 0;
+        font-size: 12px; color: var(--secondary-text-color);
+      }
+      .cempty ha-icon { --mdc-icon-size: 14px !important; opacity: 0.5; flex-shrink: 0; }
+      .cempty code    { font-size: 11px; }
     `;
   }
 }
