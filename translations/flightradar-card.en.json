@@ -1,0 +1,21 @@
+{
+  "editor": {
+    "entity":       "Entity",
+    "title":        "Card title",
+    "home_airport": "Home airport",
+    "tap_action":   "Tap action"
+  },
+  "editor_helper": {
+    "entity":       "FlightRadar24 sensor entity",
+    "home_airport": "IATA code or city name (e.g. ZRH or Zurich)"
+  },
+  "card": {
+    "title_default":    "Flights nearby",
+    "no_flights":       "No flights in the area",
+    "entity_not_found": "Entity not found",
+    "departure":        "Departure",
+    "arrival":          "Arrival",
+    "altitude":         "Altitude",
+    "speed":            "Speed"
+  }
+}

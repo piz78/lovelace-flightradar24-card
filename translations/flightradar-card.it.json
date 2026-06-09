@@ -1,0 +1,21 @@
+{
+  "editor": {
+    "entity":       "Entità",
+    "title":        "Titolo della scheda",
+    "home_airport": "Aeroporto di casa",
+    "tap_action":   "Azione al tocco"
+  },
+  "editor_helper": {
+    "entity":       "Entità del sensore FlightRadar24",
+    "home_airport": "Codice IATA o nome della città (es. ZRH o Zurigo)"
+  },
+  "card": {
+    "title_default":    "Voli nelle vicinanze",
+    "no_flights":       "Nessun volo nell'area",
+    "entity_not_found": "Entità non trovata",
+    "departure":        "Partenza",
+    "arrival":          "Arrivo",
+    "altitude":         "Quota",
+    "speed":            "Velocità"
+  }
+}
