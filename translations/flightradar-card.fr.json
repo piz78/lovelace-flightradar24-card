@@ -1,0 +1,22 @@
+{
+  "editor": {
+    "entity":       "Entité",
+    "title":        "Titre de la carte",
+    "home_airport": "Aéroport local",
+    "compact":      "Vue compacte",
+    "tap_action":   "Action au toucher"
+  },
+  "editor_helper": {
+    "entity":       "Entité du capteur FlightRadar24",
+    "home_airport": "Code IATA ou nom de ville (ex. GVA ou Genève)"
+  },
+  "card": {
+    "title_default":    "Vols à proximité",
+    "no_flights":       "Aucun vol dans la zone",
+    "entity_not_found": "Entité introuvable",
+    "departure":        "Départ",
+    "arrival":          "Arrivée",
+    "altitude":         "Altitude",
+    "speed":            "Vitesse"
+  }
+}

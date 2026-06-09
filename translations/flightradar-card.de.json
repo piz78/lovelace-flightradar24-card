@@ -1,0 +1,22 @@
+{
+  "editor": {
+    "entity":       "Entity",
+    "title":        "Kartentitel",
+    "home_airport": "Heimflughafen",
+    "compact":      "Kompaktansicht",
+    "tap_action":   "Tippen-Aktion"
+  },
+  "editor_helper": {
+    "entity":       "FlightRadar24 Sensor-Entity",
+    "home_airport": "IATA-Code oder Stadtname (z. B. ZRH oder Zürich)"
+  },
+  "card": {
+    "title_default":    "Flüge im Bereich",
+    "no_flights":       "Keine Flüge im Bereich",
+    "entity_not_found": "Entity nicht gefunden",
+    "departure":        "Abflug",
+    "arrival":          "Ankunft",
+    "altitude":         "Flughöhe",
+    "speed":            "Geschw."
+  }
+}
