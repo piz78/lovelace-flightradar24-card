@@ -1,25 +1,32 @@
 # ✈️ FlightRadar24 Card
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![GitHub release](https://img.shields.io/github/v/release/YOUR_USERNAME/lovelace-flightradar24-card?include_prereleases)](https://github.com/YOUR_USERNAME/lovelace-flightradar24-card/releases)
+[![GitHub release](https://img.shields.io/github/v/release/piz78/lovelace-flightradar24-card?include_prereleases)](https://github.com/piz78/lovelace-flightradar24-card/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A custom Lovelace card for Home Assistant that displays nearby flights from the
 [FlightRadar24 integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)
-in a clean, theme-aware UI — with a full detail view and a compact list mode.
+in a clean, theme-aware UI.
+
+Two card types are available:
+
+| Type | Description |
+|---|---|
+| `custom:flightradar-card` | Full detail view — times, altitude, speed per flight |
+| `custom:flightradar-card-compact` | Single-line view — designed for `rows: 1` dashboard tiles |
 
 ---
 
 ## Preview
 
-### Full view
+### Full view (`flightradar-card`)
 
 ```
 ┌──────────────────────────────────────────────┐
 │ 〇 FLÜGE IM BEREICH                          │
 │                                               │
 │ ┌───────────────────────────────────────────┐ │
-│ │ ↗ LX1270  HB-IOO               [Swiss]   │ │
+│ │ ↗ LX1270                        [Swiss]   │ │
 │ │   Airbus A321-212                         │ │
 │ │  ┌─────────────────────────────────────┐  │ │
 │ │  │  Zurich 🇨🇭  ──›  Copenhagen 🇩🇰   │  │ │
@@ -36,23 +43,22 @@ in a clean, theme-aware UI — with a full detail view and a compact list mode.
 └──────────────────────────────────────────────┘
 ```
 
-### Compact view
+### Compact view (`flightradar-card-compact`) — full width (`columns: 12`)
 
 ```
-┌──────────────────────────────────────────────┐
-│ 〇 FLÜGE IM BEREICH                          │
-│                                               │
-│ ┌───────────────────────────────────────────┐ │
-│ │ ↗  LX1270  HB-IOO             [Swiss]    │ │
-│ │    Zurich 🇨🇭 › Copenhagen 🇩🇰             │ │
-│ ├───────────────────────────────────────────┤ │
-│ │ ↙  LX1481  HB-JVA            [Helvetic]  │ │
-│ │    Prague 🇨🇿 › Zurich 🇨🇭                │ │
-│ ├───────────────────────────────────────────┤ │
-│ │ ✈  TP930   CS-TXK      [TAP Air Portugal] │ │
-│ │    Lisbon 🇵🇹 › Geneva 🇨🇭                │ │
-│ └───────────────────────────────────────────┘ │
-└──────────────────────────────────────────────┘
+┌─ FLÜGE IM BEREICH ──────────────────────────────────────────────────────────────┐
+│  ↗ LX1270  ZRH 🇨🇭 → CPH 🇩🇰  [Swiss]  │  ↙ LX1481  PRG 🇨🇿 → ZRH 🇨🇭  [Helvetic]  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Compact view — half width (`columns: 6`)
+
+```
+┌─ FLÜGE IM BEREICH ──────────────────┐
+│  ↗ LX1270  ZRH 🇨🇭 → CPH 🇩🇰        │
+│  ↙ LX1481  PRG 🇨🇿 → ZRH 🇨🇭        │
+│  ✈ TP930   LIS 🇵🇹 → GVA 🇨🇭        │
+└─────────────────────────────────────┘
 ```
 
 > **Icon legend:**  ↗ = departing from home airport · ↙ = arriving at home airport · ✈ = passing through
@@ -62,7 +68,9 @@ in a clean, theme-aware UI — with a full detail view and a compact list mode.
 ## Features
 
 - **Full card view** — departure/arrival times, altitude, ground speed per flight
-- **Compact list view** — see many flights at a glance
+- **Compact card** — single-line flights, designed for `rows: 1` dashboard tiles
+- **HA grid layout** — compact card uses `getGridOptions()` for native size control
+- **Progressive display** — airport info adapts to available card width via CSS container queries
 - **Home airport awareness** — icon adapts based on flight direction
 - **Visual card editor** — no YAML needed, configure via the Lovelace UI
 - **`tap_action` support** — navigate, more-info, URL, call-service
@@ -76,6 +84,7 @@ in a clean, theme-aware UI — with a full detail view and a compact list mode.
 - Home Assistant 2023.0 or newer
 - [FlightRadar24 integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)
   installed and configured
+- **Compact card:** requires a **Sections**-layout dashboard for `grid_options` to take effect
 
 ---
 
@@ -85,7 +94,7 @@ in a clean, theme-aware UI — with a full detail view and a compact list mode.
 
 1. Open **HACS → Frontend**
 2. Click the **⋮** menu (top right) → **Custom repositories**
-3. Add `https://github.com/YOUR_USERNAME/lovelace-flightradar24-card` with
+3. Add `https://github.com/piz78/lovelace-flightradar24-card` with
    category **Lovelace**
 4. Find **FlightRadar24 Card** → **Download**
 5. Reload your browser
@@ -96,7 +105,7 @@ in a clean, theme-aware UI — with a full detail view and a compact list mode.
 ### Manual
 
 1. Download the latest release from the
-   [Releases page](https://github.com/YOUR_USERNAME/lovelace-flightradar24-card/releases)
+   [Releases page](https://github.com/piz78/lovelace-flightradar24-card/releases)
 2. Copy `flightradar-card.js` to `/config/www/`
 3. Copy the `translations/` folder to `/config/www/translations/`
 4. Go to **Settings → Dashboards → Resources**
@@ -109,55 +118,60 @@ in a clean, theme-aware UI — with a full detail view and a compact list mode.
 
 ## Configuration
 
-### Minimal
+### Full card — minimal
 
 ```yaml
 type: custom:flightradar-card
 entity: sensor.flightradar24_fluge_im_bereich
 ```
 
-### Full example
+### Full card — all options
 
 ```yaml
 type: custom:flightradar-card
 entity: sensor.flightradar24_fluge_im_bereich
 title: Flüge im Bereich
 home_airport: ZRH
-compact: false
 tap_action:
   action: navigate
   navigation_path: /lovelace/flights
 ```
 
-### Compact view on the overview dashboard
+### Compact card
 
 ```yaml
-type: custom:flightradar-card
+type: custom:flightradar-card-compact
 entity: sensor.flightradar24_fluge_im_bereich
 home_airport: ZRH
-compact: true
 tap_action:
   action: navigate
   navigation_path: /lovelace/flights
+grid_options:
+  columns: 12
+  rows: 1
 ```
+
+The `grid_options` key is a native HA property and controls the card size in the
+dashboard editor's **Layout** tab. The card defaults to `columns: 6, rows: 1`
+when added. The minimum is `columns: 6`.
 
 ---
 
 ## Options
+
+Both card types share the same configuration options:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `entity` | `string` | **required** | The FlightRadar24 sensor entity ID |
 | `title` | `string` | *(from language file)* | Card header title |
 | `home_airport` | `string` | — | IATA code **or** city name — e.g. `ZRH` or `Zurich` |
-| `compact` | `boolean` | `false` | Show compact list instead of full cards |
 | `tap_action` | `action` | — | Action to perform when the card is tapped |
 
 ### `home_airport` matching
 
-The value is compared **case-insensitively** against both the IATA code
-(`airport_origin_iata`, `airport_destination_iata`) and the city name
-(`airport_origin_city`, `airport_destination_city`) from the sensor attributes.
+The value is compared **case-insensitively** against the IATA code and city name
+from the sensor attributes to determine the flight direction icon.
 
 ### `tap_action` values
 
@@ -176,6 +190,16 @@ The value is compared **case-insensitively** against both the IATA code
 | `mdi:airplane-takeoff` | Flight departs **from** the home airport |
 | `mdi:airplane-landing` | Flight arrives **at** the home airport |
 | `mdi:airplane` | Home airport not involved, or `home_airport` not set |
+
+### Compact card — airport display
+
+The compact card adapts airport labels to the available card width:
+
+| Card width | Displayed |
+|---|---|
+| > 560 px | IATA code + flag + airline badge |
+| 420–560 px | IATA code + flag |
+| < 420 px | Flag only |
 
 ---
 
@@ -206,7 +230,6 @@ translation files present.
     "entity":       "Entity",
     "title":        "Card title",
     "home_airport": "Home airport",
-    "compact":      "Compact view",
     "tap_action":   "Tap action"
   },
   "editor_helper": {
@@ -238,7 +261,7 @@ Pull requests are welcome!
 5. Open a Pull Request
 
 For bugs or feature requests, please use the
-[issue templates](https://github.com/YOUR_USERNAME/lovelace-flightradar24-card/issues/new/choose).
+[issue templates](https://github.com/piz78/lovelace-flightradar24-card/issues/new/choose).
 
 ---
 
