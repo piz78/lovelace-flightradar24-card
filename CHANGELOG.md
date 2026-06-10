@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.4] - 2026-06-10
+
+### Fixed
+- Map card: Leaflet CSS is now fetched and injected as a `<style>` element
+  directly into the shadow root — a `<link>` nested inside a `<div>` in Shadow
+  DOM is not reliably applied by browsers, which caused tiles and markers to
+  disappear entirely
+- Map card: switched CDN from `cdnjs.cloudflare.com` to `cdn.jsdelivr.net` for
+  both Leaflet JS and CSS — less likely to be blocked by privacy extensions
+- Map card: switched tile layer from CartoDB dark (`basemaps.cartocdn.com`) to
+  OpenStreetMap (`tile.openstreetmap.org`) — works without a CDN, never blocked
+- Map card: added `invalidateSize()` call via `requestAnimationFrame` after
+  Leaflet initialization to fix cases where the container was 0×0 at init time
+- Map card: aircraft icon colors updated for contrast on light OSM tiles;
+  added white stroke for visibility; icon size increased from 22 px to 26 px
+- Map card: map wrapper uses `position: absolute; inset: 0` instead of
+  `height: 100%` to fill the container reliably; `min-height: 240px` ensures
+  Leaflet always gets real pixel dimensions
+- Map card: HUD pill and zoom control colors are now theme-aware (use HA CSS
+  variables) instead of hardcoded dark values
+
+---
+
 ## [0.2.3] - 2026-06-10
 
 ### Fixed

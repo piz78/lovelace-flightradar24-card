@@ -643,18 +643,27 @@ customElements.define('flightradar-card-compact', FlightRadarCardCompact);
 
 
 // ── Leaflet Loader ─────────────────────────────────────────────────────────────
-// Loads Leaflet JS once per page; all map card instances share the same promise.
+// Loads Leaflet JS + CSS once per page via jsdelivr (less blocked than cdnjs).
+// CSS is fetched and stored as a string so it can be injected as a <style>
+// element directly into each card's shadow root — a <link> nested inside a div
+// is unreliable in Shadow DOM and causes tiles/markers to vanish.
 let _leafletReady = null;
+let _leafletCSS   = '';
+
 function _loadLeaflet() {
   if (_leafletReady) return _leafletReady;
-  _leafletReady = new Promise(resolve => {
+  const jsReady = new Promise(resolve => {
     if (window.L) { resolve(); return; }
-    const s   = document.createElement('script');
-    s.src     = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-    s.onload  = resolve;
-    s.onerror = resolve;
+    const s  = document.createElement('script');
+    s.src    = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js';
+    s.onload = resolve; s.onerror = resolve;
     document.head.appendChild(s);
   });
+  const cssReady = fetch('https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css')
+    .then(r => r.ok ? r.text() : '')
+    .then(css => { _leafletCSS = css; })
+    .catch(() => {});
+  _leafletReady = Promise.all([jsReady, cssReady]);
   return _leafletReady;
 }
 
@@ -741,6 +750,7 @@ class FlightRadarMapCard extends FlightRadarCard {
     this._mapLoading = true;
     const title = this.config.title || this._t('card.title_default');
 
+    // No <link> here — Leaflet CSS is injected as <style> after fetch (see below).
     this.shadowRoot.innerHTML = `
       <style>${this._mapCss()}</style>
       <ha-card>
@@ -749,15 +759,21 @@ class FlightRadarMapCard extends FlightRadarCard {
           <span>${title}</span>
           <span class="mhud"><span class="mlive"></span><span class="mcnt">…</span></span>
         </div>
-        <div class="mwrap">
-          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-          <div class="mmap"></div>
-        </div>
+        <div class="mwrap"><div class="mmap"></div></div>
       </ha-card>`;
 
     await _loadLeaflet();
 
     if (!this._mapLoading) return; // disconnected during async load
+
+    // Inject Leaflet CSS as <style> directly into the shadow root.
+    // A <link> inside a <div> inside Shadow DOM is unreliable — tiles and markers
+    // won't render without .leaflet-container { position: relative } being applied.
+    if (_leafletCSS) {
+      const st = document.createElement('style');
+      st.textContent = _leafletCSS;
+      this.shadowRoot.insertBefore(st, this.shadowRoot.querySelector('ha-card'));
+    }
 
     const mapEl = this.shadowRoot.querySelector('.mmap');
     if (!mapEl || !window.L) { this._mapLoading = false; return; }
@@ -769,10 +785,15 @@ class FlightRadarMapCard extends FlightRadarCard {
       attributionControl: false,
     });
 
+    // OpenStreetMap tiles — reliable, rarely blocked by privacy extensions.
     window.L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      { subdomains: 'abcd', maxZoom: 19 }
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 19, attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>' }
     ).addTo(this._map);
+
+    // Force a size recalculation — Leaflet may have initialized with 0×0 dimensions
+    // if the shadow root wasn't fully laid out yet.
+    requestAnimationFrame(() => { if (this._map) this._map.invalidateSize(); });
 
     this._mapInited  = true;
     this._mapLoading = false;
@@ -781,16 +802,18 @@ class FlightRadarMapCard extends FlightRadarCard {
 
   _makeAircraftIcon(heading, altFt, onGround) {
     const deg  = heading != null ? Math.round(heading) : 0;
-    const fill = onGround      ? '#64748b'
-               : altFt == null ? '#7dd3fc'
-               : altFt > 25000 ? '#38bdf8'
-               : altFt > 8000  ? '#7dd3fc'
-               :                 '#bae6fd';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22"
-        style="display:block;transform:rotate(${deg}deg);filter:drop-shadow(0 1px 4px rgba(0,0,0,.9))">
-      <path fill="${fill}" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+    // Colors chosen for contrast on OSM light tiles.
+    const fill = onGround      ? '#64748b'   // grey   — on ground
+               : altFt == null ? '#0369a1'   // blue   — unknown altitude
+               : altFt > 25000 ? '#0ea5e9'   // sky    — cruise
+               : altFt > 8000  ? '#0284c7'   // mid    — climb/descent
+               :                 '#0369a1';  // dark   — low altitude
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26"
+        style="display:block;transform:rotate(${deg}deg);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))">
+      <path fill="${fill}" stroke="#fff" stroke-width="0.5"
+            d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
     </svg>`;
-    return window.L.divIcon({ html: svg, className: '', iconSize: [22, 22], iconAnchor: [11, 11] });
+    return window.L.divIcon({ html: svg, className: '', iconSize: [26, 26], iconAnchor: [13, 13] });
   }
 
   _fmtTimeMap(unix, tzOffset) {
@@ -902,8 +925,8 @@ class FlightRadarMapCard extends FlightRadarCard {
 
   _mapCss() {
     return `
-      :host { display: block; }
-      ha-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+      :host { display: block; height: 100%; }
+      ha-card { height: 100%; min-height: 300px; display: flex; flex-direction: column; overflow: hidden; }
 
       .mheader {
         display: flex; align-items: center; gap: 8px; flex-shrink: 0;
@@ -916,10 +939,11 @@ class FlightRadarMapCard extends FlightRadarCard {
 
       .mhud {
         margin-left: auto;
-        background: rgba(11,17,32,0.82); border: 1px solid rgba(56,189,248,0.18);
+        background: var(--card-background-color,#fff); border: 1px solid var(--divider-color);
         border-radius: 20px; padding: 2px 9px;
         font-family: ui-monospace,'SF Mono',monospace; font-size: 11px;
-        display: flex; align-items: center; gap: 5px; color: #7dd3fc;
+        display: flex; align-items: center; gap: 5px;
+        color: var(--primary-text-color);
       }
       .mlive {
         width: 6px; height: 6px; border-radius: 50%;
@@ -928,37 +952,44 @@ class FlightRadarMapCard extends FlightRadarCard {
       }
       @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-      .mwrap { flex: 1; min-height: 180px; position: relative; overflow: hidden; }
-      .mmap  { width: 100%; height: 100%; background: #0b1120; }
+      /* Map fills remaining card height; min-height ensures Leaflet gets real dimensions. */
+      .mwrap { flex: 1; min-height: 240px; position: relative; overflow: hidden; }
+      .mmap  { position: absolute; inset: 0; }
 
-      /* Zoom controls — dark theme */
+      /* Leaflet zoom controls — theme-aware */
       .leaflet-control-zoom { border: none !important; box-shadow: none !important; margin: 8px 8px 0 0 !important; }
       .leaflet-control-zoom a {
-        width: 26px !important; height: 26px !important; line-height: 26px !important;
-        background: rgba(11,17,32,0.88) !important; color: #7dd3fc !important;
-        border: 1px solid rgba(56,189,248,0.18) !important; border-radius: 5px !important;
-        margin-bottom: 2px !important;
+        width: 28px !important; height: 28px !important; line-height: 28px !important;
+        background: var(--card-background-color,#fff) !important;
+        color: var(--primary-color) !important;
+        border: 1px solid var(--divider-color) !important;
+        border-radius: 6px !important; margin-bottom: 2px !important;
+        font-size: 16px !important; font-weight: 700 !important;
       }
-      .leaflet-control-zoom a:hover { background: rgba(30,41,59,0.98) !important; }
+      .leaflet-control-zoom a:hover { opacity: 0.8; }
+      .leaflet-control-attribution {
+        font-size: 9px !important;
+        background: rgba(255,255,255,0.75) !important;
+      }
 
-      /* Aircraft label */
+      /* Aircraft call-sign label */
       .ac-lbl {
-        color: #fde68a; font-family: ui-monospace,'SF Mono',monospace;
-        font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
-        text-shadow: 0 0 5px #000, 0 0 5px #000;
+        color: #1e3a5f; font-family: ui-monospace,'SF Mono',monospace;
+        font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+        text-shadow: 0 0 3px #fff, 0 0 3px #fff;
         white-space: nowrap; pointer-events: none;
       }
 
-      /* Popup */
+      /* Popup — dark overlay on the light map */
       .leaflet-popup-content-wrapper {
-        background: rgba(11,17,32,0.97) !important; border: 1px solid rgba(56,189,248,0.22) !important;
-        border-radius: 12px !important; box-shadow: 0 8px 40px rgba(0,0,0,0.7) !important;
+        background: rgba(15,23,42,0.97) !important; border: 1px solid rgba(56,189,248,0.25) !important;
+        border-radius: 12px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
         padding: 0 !important; overflow: hidden;
       }
       .leaflet-popup-content { margin: 0 !important; }
       .leaflet-popup-tip-container { display: none !important; }
-      .leaflet-popup-close-button { color: #475569 !important; top: 8px !important; right: 10px !important; }
-      .leaflet-popup-close-button:hover { color: #94a3b8 !important; }
+      .leaflet-popup-close-button { color: #64748b !important; top: 8px !important; right: 10px !important; font-size: 18px !important; }
+      .leaflet-popup-close-button:hover { color: #cbd5e1 !important; }
 
       .pu { min-width: 220px; font-family: ui-monospace,'SF Mono',monospace; }
       .pu-head { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px 8px; }
