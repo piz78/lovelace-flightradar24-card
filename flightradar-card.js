@@ -287,8 +287,8 @@ class FlightRadarCard extends HTMLElement {
     const home = this.config.home_airport?.trim().toLowerCase();
     if (!home) return 'mdi:airplane';
     const eq = v => v?.trim().toLowerCase() === home;
-    if (eq(f.airport_origin_iata)      || eq(f.airport_origin_city))      return 'mdi:airplane-takeoff';
-    if (eq(f.airport_destination_iata) || eq(f.airport_destination_city)) return 'mdi:airplane-landing';
+    if (eq(f.airport_origin_code_iata)      || eq(f.airport_origin_iata)      || eq(f.airport_origin_city))      return 'mdi:airplane-takeoff';
+    if (eq(f.airport_destination_code_iata) || eq(f.airport_destination_iata) || eq(f.airport_destination_city)) return 'mdi:airplane-landing';
     return 'mdi:airplane';
   }
 
@@ -516,10 +516,10 @@ class FlightRadarCardCompact extends FlightRadarCard {
       <div class="citem">
         <ha-icon icon="${this._flightIcon(f)}" class="icon-primary cicon"></ha-icon>
         <span class="cflight">${f.flight_number || '—'}</span>
-        <span class="ciata">${f.airport_origin_iata || ''}</span>
+        <span class="ciata">${f.airport_origin_code_iata || f.airport_origin_iata || ''}</span>
         ${this._flag(f.airport_origin_country_code)}
         <ha-icon icon="mdi:arrow-right" class="carrow"></ha-icon>
-        <span class="ciata">${f.airport_destination_iata || ''}</span>
+        <span class="ciata">${f.airport_destination_code_iata || f.airport_destination_iata || ''}</span>
         ${this._flag(f.airport_destination_country_code)}
         <span class="cbadge">${f.airline_short || ''}</span>
       </div>`;

@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.10] - 2026-06-10
+
+### Fixed
+- Compact card: IATA codes now read `airport_origin_code_iata` /
+  `airport_destination_code_iata` (the actual sensor field names) with
+  `airport_origin_iata` / `airport_destination_iata` as fallback — codes
+  were always empty because only the wrong field name was used
+- Home-airport icon detection (`_flightIcon`) updated with the same fallback
+  so takeoff/landing icons correctly reflect the configured home airport
+
+---
+
 ## [0.2.9] - 2026-06-10
 
 ### Added
