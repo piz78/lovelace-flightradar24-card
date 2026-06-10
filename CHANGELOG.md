@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.6] - 2026-06-10
+
+### Added
+- `flightradar-card` (full detail view) now exposes `getGridOptions()` —
+  the Layout tab appears in the card editor so tile size can be adjusted
+  without YAML; default `columns: 6, rows: 5`, minimum `columns: 4, rows: 2`
+
+### Changed
+- Map card: flight number label is now embedded inside the aircraft icon div
+  and absolutely positioned to the LEFT of the badge via
+  `right: calc(100% + 5px)` — the icon no longer covers any part of the label
+- Map card: the separate second Leaflet marker used solely for labels is removed;
+  each aircraft is now a single marker (simpler, fewer DOM nodes)
+
+---
+
 ## [0.2.5] - 2026-06-10
 
 ### Changed

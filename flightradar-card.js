@@ -233,6 +233,10 @@ class FlightRadarCard extends HTMLElement {
   // Tells HA which element to open when the user clicks the visual-editor pencil.
   static getConfigElement() { return document.createElement('flightradar-card-editor'); }
 
+  static getGridOptions() {
+    return { columns: 6, rows: 5, min_columns: 4, min_rows: 2 };
+  }
+
   static getStubConfig() {
     return {
       entity:       'sensor.flightradar24_fluge_im_bereich',
@@ -800,16 +804,21 @@ class FlightRadarMapCard extends FlightRadarCard {
     this._updateMarkers();
   }
 
-  _makeAircraftIcon(heading, altFt, onGround) {
+  _makeAircraftIcon(heading, altFt, onGround, label) {
     const deg  = heading != null ? Math.round(heading) : 0;
     const fill = onGround      ? '#64748b'   // grey   — on ground
                : altFt == null ? '#0369a1'   // blue   — unknown altitude
                : altFt > 25000 ? '#0ea5e9'   // sky    — cruise
                : altFt > 8000  ? '#0284c7'   // mid    — climb/descent
                :                 '#0369a1';  // dark   — low altitude
-    // Circular white badge with altitude-colored border for maximum contrast
-    // on any map tile style.
-    const html = `<div style="
+    // Label is absolutely positioned to the LEFT of the 30×30 badge so it
+    // is never covered by the icon. iconAnchor still targets badge center.
+    const html = `<div style="position:relative;width:30px;height:30px;">
+      <span class="ac-lbl" style="
+        position:absolute;right:calc(100% + 5px);
+        top:50%;transform:translateY(-50%);
+      ">${label || ''}</span>
+      <div style="
         width:30px;height:30px;border-radius:50%;
         background:rgba(255,255,255,0.92);
         border:2.5px solid ${fill};
@@ -818,7 +827,8 @@ class FlightRadarMapCard extends FlightRadarCard {
       "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"
           style="display:block;transform:rotate(${deg}deg)">
         <path fill="${fill}" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-      </svg></div>`;
+      </svg></div>
+    </div>`;
     return window.L.divIcon({ html, className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
   }
 
@@ -902,27 +912,22 @@ class FlightRadarMapCard extends FlightRadarCard {
       const label = f.flight_number || f.callsign || id;
       seen.add(id);
 
-      const icon  = this._makeAircraftIcon(f.heading, f.altitude, f.on_ground);
+      const icon  = this._makeAircraftIcon(f.heading, f.altitude, f.on_ground, label);
       const popup = this._makePopup(f);
 
       if (this._markers.has(id)) {
-        const { mk, lm } = this._markers.get(id);
+        const { mk } = this._markers.get(id);
         mk.setLatLng([f.latitude, f.longitude]).setIcon(icon).setPopupContent(popup);
-        lm.setLatLng([f.latitude, f.longitude]);
       } else {
         const mk = window.L.marker([f.latitude, f.longitude], { icon, zIndexOffset: f.on_ground ? 0 : 200 })
           .addTo(this._map)
           .bindPopup(popup, { maxWidth: 270, closeOnClick: false });
-        const lm = window.L.marker([f.latitude, f.longitude], {
-          icon: window.L.divIcon({ html: `<div class="ac-lbl">${label}</div>`, className: '', iconAnchor: [-5, 9] }),
-          interactive: false, zIndexOffset: -9999,
-        }).addTo(this._map);
-        this._markers.set(id, { mk, lm });
+        this._markers.set(id, { mk });
       }
     }
 
-    for (const [id, { mk, lm }] of [...this._markers]) {
-      if (!seen.has(id)) { mk.remove(); lm.remove(); this._markers.delete(id); }
+    for (const [id, { mk }] of [...this._markers]) {
+      if (!seen.has(id)) { mk.remove(); this._markers.delete(id); }
     }
 
     const cnt = this.shadowRoot.querySelector('.mcnt');
