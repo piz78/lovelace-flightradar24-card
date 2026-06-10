@@ -704,7 +704,7 @@ class FlightRadarMapCard extends FlightRadarCard {
   static getConfigElement() { return document.createElement('flightradar-card-map-editor'); }
 
   static getGridOptions() {
-    return { columns: 12, rows: 4, min_columns: 6, min_rows: 2 };
+    return { columns: 12, rows: 6, min_columns: 6, min_rows: 2 };
   }
 
   static getStubConfig() {
@@ -718,7 +718,7 @@ class FlightRadarMapCard extends FlightRadarCard {
     };
   }
 
-  getCardSize() { return 4; }
+  getCardSize() { return 6; }
 
   setConfig(config) {
     super.setConfig(config);
@@ -802,18 +802,24 @@ class FlightRadarMapCard extends FlightRadarCard {
 
   _makeAircraftIcon(heading, altFt, onGround) {
     const deg  = heading != null ? Math.round(heading) : 0;
-    // Colors chosen for contrast on OSM light tiles.
     const fill = onGround      ? '#64748b'   // grey   — on ground
                : altFt == null ? '#0369a1'   // blue   — unknown altitude
                : altFt > 25000 ? '#0ea5e9'   // sky    — cruise
                : altFt > 8000  ? '#0284c7'   // mid    — climb/descent
                :                 '#0369a1';  // dark   — low altitude
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26"
-        style="display:block;transform:rotate(${deg}deg);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))">
-      <path fill="${fill}" stroke="#fff" stroke-width="0.5"
-            d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-    </svg>`;
-    return window.L.divIcon({ html: svg, className: '', iconSize: [26, 26], iconAnchor: [13, 13] });
+    // Circular white badge with altitude-colored border for maximum contrast
+    // on any map tile style.
+    const html = `<div style="
+        width:30px;height:30px;border-radius:50%;
+        background:rgba(255,255,255,0.92);
+        border:2.5px solid ${fill};
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 5px rgba(0,0,0,0.35);
+      "><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18"
+          style="display:block;transform:rotate(${deg}deg)">
+        <path fill="${fill}" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+      </svg></div>`;
+    return window.L.divIcon({ html, className: '', iconSize: [30, 30], iconAnchor: [15, 15] });
   }
 
   _fmtTimeMap(unix, tzOffset) {
@@ -952,8 +958,9 @@ class FlightRadarMapCard extends FlightRadarCard {
       }
       @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
-      /* Map fills remaining card height; min-height ensures Leaflet gets real dimensions. */
-      .mwrap { flex: 1; min-height: 240px; position: relative; overflow: hidden; }
+      /* Map fills remaining card height; min-height ensures Leaflet gets real dimensions.
+         rows:6 ≈ 336px card − ~44px header = ~292px map area. */
+      .mwrap { flex: 1; min-height: 290px; position: relative; overflow: hidden; }
       .mmap  { position: absolute; inset: 0; }
 
       /* Leaflet zoom controls — theme-aware */
@@ -972,12 +979,16 @@ class FlightRadarMapCard extends FlightRadarCard {
         background: rgba(255,255,255,0.75) !important;
       }
 
-      /* Aircraft call-sign label */
+      /* Aircraft call-sign label — white pill for contrast on any tile style */
       .ac-lbl {
-        color: #1e3a5f; font-family: ui-monospace,'SF Mono',monospace;
-        font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
-        text-shadow: 0 0 3px #fff, 0 0 3px #fff;
+        display: inline-block;
+        background: rgba(255,255,255,0.92);
+        border-radius: 4px; padding: 1px 5px;
+        font-family: ui-monospace,'SF Mono',monospace;
+        font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+        color: #1e3a5f; line-height: 1.4;
         white-space: nowrap; pointer-events: none;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       }
 
       /* Popup — dark overlay on the light map */

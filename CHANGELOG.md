@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.5] - 2026-06-10
+
+### Changed
+- Map card: default grid size raised from `rows: 4` to `rows: 6` so the detail
+  popup fits without overflowing; can be overridden per card via `grid_options`
+- Map card: aircraft icons now rendered as a circular white badge with an
+  altitude-colored border — high contrast on any map tile style; icon inside
+  the badge is 18 px, badge diameter 30 px
+- Map card: flight number labels now display as a white pill (background +
+  border-radius + box-shadow) instead of a plain text-shadow, making them
+  legible on any background
+- Map card: `min-height` of the map wrapper raised to 290 px to match the new
+  default row height
+
+---
+
 ## [0.2.4] - 2026-06-10
 
 ### Fixed
