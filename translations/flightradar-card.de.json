@@ -3,11 +3,17 @@
     "entity":       "Entity",
     "title":        "Kartentitel",
     "home_airport": "Heimflughafen",
-    "tap_action":   "Tippen-Aktion"
+    "tap_action":   "Tippen-Aktion",
+    "lat":          "Karte Mittelpunkt Breitengrad",
+    "lon":          "Karte Mittelpunkt Längengrad",
+    "zoom":         "Kartenausschnitt"
   },
   "editor_helper": {
     "entity":       "FlightRadar24 Sensor-Entity",
-    "home_airport": "IATA-Code oder Stadtname (z. B. ZRH oder Zürich)"
+    "home_airport": "IATA-Code oder Stadtname (z. B. ZRH oder Zürich)",
+    "lat":          "Breitengrad des Kartenzentrums (z. B. 47.463)",
+    "lon":          "Längengrad des Kartenzentrums (z. B. 8.778)",
+    "zoom":         "Zoomstufe 1–18 (Standard 11)"
   },
   "card": {
     "title_default":    "Flüge im Bereich",

@@ -3,11 +3,17 @@
     "entity":       "Entité",
     "title":        "Titre de la carte",
     "home_airport": "Aéroport local",
-    "tap_action":   "Action au toucher"
+    "tap_action":   "Action au toucher",
+    "lat":          "Latitude du centre de la carte",
+    "lon":          "Longitude du centre de la carte",
+    "zoom":         "Niveau de zoom"
   },
   "editor_helper": {
     "entity":       "Entité du capteur FlightRadar24",
-    "home_airport": "Code IATA ou nom de ville (ex. GVA ou Genève)"
+    "home_airport": "Code IATA ou nom de ville (ex. GVA ou Genève)",
+    "lat":          "Latitude du centre de la carte (ex. 47.463)",
+    "lon":          "Longitude du centre de la carte (ex. 8.778)",
+    "zoom":         "Niveau de zoom 1–18 (défaut 11)"
   },
   "card": {
     "title_default":    "Vols à proximité",

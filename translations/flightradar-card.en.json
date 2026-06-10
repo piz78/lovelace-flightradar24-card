@@ -3,11 +3,17 @@
     "entity":       "Entity",
     "title":        "Card title",
     "home_airport": "Home airport",
-    "tap_action":   "Tap action"
+    "tap_action":   "Tap action",
+    "lat":          "Map center latitude",
+    "lon":          "Map center longitude",
+    "zoom":         "Map zoom level"
   },
   "editor_helper": {
     "entity":       "FlightRadar24 sensor entity",
-    "home_airport": "IATA code or city name (e.g. ZRH or Zurich)"
+    "home_airport": "IATA code or city name (e.g. ZRH or Zurich)",
+    "lat":          "Latitude of the map center (e.g. 47.463)",
+    "lon":          "Longitude of the map center (e.g. 8.778)",
+    "zoom":         "Zoom level 1–18 (default 11)"
   },
   "card": {
     "title_default":    "Flights nearby",

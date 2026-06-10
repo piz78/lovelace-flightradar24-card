@@ -10,10 +10,16 @@ const _FALLBACK = {
     title:        'Card title',
     home_airport: 'Home airport',
     tap_action:   'Tap action',
+    lat:          'Map center latitude',
+    lon:          'Map center longitude',
+    zoom:         'Map zoom level',
   },
   editor_helper: {
     entity:       'FlightRadar24 sensor entity',
     home_airport: 'IATA code or city name (e.g. ZRH or Zurich)',
+    lat:          'Latitude of the map center (e.g. 47.463)',
+    lon:          'Longitude of the map center (e.g. 8.778)',
+    zoom:         'Zoom level 1–18 (default 11)',
   },
   card: {
     title_default:    'Flights nearby',
@@ -549,6 +555,360 @@ class FlightRadarCardCompact extends FlightRadarCard {
 customElements.define('flightradar-card', FlightRadarCard);
 customElements.define('flightradar-card-compact', FlightRadarCardCompact);
 
+
+// ── Leaflet Loader ─────────────────────────────────────────────────────────────
+// Loads Leaflet JS once per page; all map card instances share the same promise.
+let _leafletReady = null;
+function _loadLeaflet() {
+  if (_leafletReady) return _leafletReady;
+  _leafletReady = new Promise(resolve => {
+    if (window.L) { resolve(); return; }
+    const s   = document.createElement('script');
+    s.src     = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    s.onload  = resolve;
+    s.onerror = resolve;
+    document.head.appendChild(s);
+  });
+  return _leafletReady;
+}
+
+
+// ── Map Card Editor ────────────────────────────────────────────────────────────
+class FlightRadarMapCardEditor extends FlightRadarCardEditor {
+  _schema() {
+    return [
+      { name: 'entity',       required: true, selector: { entity: { domain: 'sensor' } } },
+      { name: 'title',                        selector: { text: {} } },
+      { name: 'home_airport',                 selector: { text: {} } },
+      { name: 'lat',                          selector: { number: { min: -90,  max: 90,  step: 0.00001, mode: 'box' } } },
+      { name: 'lon',                          selector: { number: { min: -180, max: 180, step: 0.00001, mode: 'box' } } },
+      { name: 'zoom',                         selector: { number: { min: 1,    max: 18,  step: 1,       mode: 'slider' } } },
+    ];
+  }
+}
+
+customElements.define('flightradar-card-map-editor', FlightRadarMapCardEditor);
+
+
+// ── Map Card ───────────────────────────────────────────────────────────────────
+//
+// Displays nearby flights on an interactive Leaflet map with a dark CartoDB
+// tile layer. Aircraft icons are SVG-colored by altitude and rotated by heading.
+// Click a marker to open a detailed popup.
+// Use as: type: custom:flightradar-card-map
+
+class FlightRadarMapCard extends FlightRadarCard {
+  constructor() {
+    super();
+    this._map        = null;
+    this._markers    = new Map();
+    this._mapInited  = false;
+    this._mapLoading = false;
+  }
+
+  static getConfigElement() { return document.createElement('flightradar-card-map-editor'); }
+
+  static getGridOptions() {
+    return { columns: 12, rows: 4, min_columns: 6, min_rows: 2 };
+  }
+
+  static getStubConfig() {
+    return {
+      entity:       'sensor.flightradar24_fluge_im_bereich',
+      title:        '',
+      home_airport: 'ZRH',
+      lat:          47.46305,
+      lon:          8.77846,
+      zoom:         11,
+    };
+  }
+
+  getCardSize() { return 4; }
+
+  setConfig(config) {
+    super.setConfig(config);
+    if (this._map) {
+      this._map.setView(
+        [config.lat ?? 47.46305, config.lon ?? 8.77846],
+        config.zoom ?? 11
+      );
+    }
+  }
+
+  disconnectedCallback() {
+    if (this._map) { this._map.remove(); this._map = null; }
+    this._markers.clear();
+    this._mapInited  = false;
+    this._mapLoading = false;
+  }
+
+  _render() {
+    if (!this._hass || !this.config) return;
+    if (!this._mapInited && !this._mapLoading) {
+      this._buildCard();
+    } else if (this._mapInited) {
+      this._updateMarkers();
+    }
+  }
+
+  async _buildCard() {
+    this._mapLoading = true;
+    const title = this.config.title || this._t('card.title_default');
+
+    this.shadowRoot.innerHTML = `
+      <style>${this._mapCss()}</style>
+      <ha-card>
+        <div class="mheader">
+          <ha-icon icon="mdi:radar"></ha-icon>
+          <span>${title}</span>
+          <span class="mhud"><span class="mlive"></span><span class="mcnt">…</span></span>
+        </div>
+        <div class="mwrap">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+          <div class="mmap"></div>
+        </div>
+      </ha-card>`;
+
+    await _loadLeaflet();
+
+    if (!this._mapLoading) return; // disconnected during async load
+
+    const mapEl = this.shadowRoot.querySelector('.mmap');
+    if (!mapEl || !window.L) { this._mapLoading = false; return; }
+
+    this._map = window.L.map(mapEl, {
+      center:             [this.config.lat ?? 47.46305, this.config.lon ?? 8.77846],
+      zoom:               this.config.zoom ?? 11,
+      zoomControl:        true,
+      attributionControl: false,
+    });
+
+    window.L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      { subdomains: 'abcd', maxZoom: 19 }
+    ).addTo(this._map);
+
+    this._mapInited  = true;
+    this._mapLoading = false;
+    this._updateMarkers();
+  }
+
+  _makeAircraftIcon(heading, altFt, onGround) {
+    const deg  = heading != null ? Math.round(heading) : 0;
+    const fill = onGround      ? '#64748b'
+               : altFt == null ? '#7dd3fc'
+               : altFt > 25000 ? '#38bdf8'
+               : altFt > 8000  ? '#7dd3fc'
+               :                 '#bae6fd';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22"
+        style="display:block;transform:rotate(${deg}deg);filter:drop-shadow(0 1px 4px rgba(0,0,0,.9))">
+      <path fill="${fill}" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+    </svg>`;
+    return window.L.divIcon({ html: svg, className: '', iconSize: [22, 22], iconAnchor: [11, 11] });
+  }
+
+  _fmtTimeMap(unix, tzOffset) {
+    if (unix == null) return '–';
+    const d  = new Date((unix + (tzOffset ?? 0)) * 1000);
+    return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
+  }
+
+  _delayLabel(sched, actual) {
+    if (sched == null || actual == null) return '';
+    const diff = Math.round((actual - sched) / 60);
+    if (Math.abs(diff) < 1) return '';
+    const cls  = diff > 0 ? 'delay' : 'early';
+    const sign = diff > 0 ? '+' : '';
+    return ` <span class="${cls}">(${sign}${diff} min)</span>`;
+  }
+
+  _makePopup(f) {
+    const fn  = f.flight_number || f.callsign || f.aircraft_icao_24bit || '?';
+    const dep = this._fmtTimeMap(f.time_real_departure   || f.time_scheduled_departure,   f.airport_origin_timezone_offset);
+    const arr = this._fmtTimeMap(f.time_estimated_arrival || f.time_real_arrival || f.time_scheduled_arrival, f.airport_destination_timezone_offset);
+    const depDelay = this._delayLabel(f.time_scheduled_departure, f.time_real_departure);
+    const arrDelay = this._delayLabel(f.time_scheduled_arrival,   f.time_estimated_arrival);
+
+    const altFt = f.altitude      != null ? Math.round(f.altitude).toLocaleString('de-CH') + ' ft' : '–';
+    const altM  = f.altitude      != null ? Math.round(f.altitude * 0.3048).toLocaleString('de-CH') + ' m' : '–';
+    const spd   = f.ground_speed  != null ? f.ground_speed + ' km/h' : '–';
+    const hdg   = f.heading       != null ? String(f.heading).padStart(3, '0') + '°' : '–';
+    const vs    = f.vertical_speed != null
+      ? (f.vertical_speed > 0 ? '+' : '') + Math.round(f.vertical_speed).toLocaleString('de-CH') + ' fpm'
+      : '–';
+    const dist  = f.distance != null ? f.distance.toFixed(1) + ' km' : '–';
+    const photo = f.aircraft_photo_small
+      ? `<img class="pu-photo" src="${f.aircraft_photo_small}" onerror="this.style.display='none'" alt="">`
+      : '';
+
+    return `<div class="pu">
+      <div class="pu-head">
+        <div class="pu-head-info">
+          <div class="pu-fn">${fn}</div>
+          <div class="pu-airline">${f.airline || ''} · ${f.aircraft_model || f.aircraft_code || ''}</div>
+        </div>${photo}
+      </div>
+      <div class="pu-route">
+        <div class="pu-apt"><div class="pu-apt-code">${f.airport_origin_code_iata || '?'}</div><div class="pu-apt-city">${f.airport_origin_city || ''}</div></div>
+        <div class="pu-arrow"><div class="pu-arrow-line"></div><div class="pu-arrow-icon">✈</div><div class="pu-arrow-line"></div></div>
+        <div class="pu-apt"><div class="pu-apt-code">${f.airport_destination_code_iata || '?'}</div><div class="pu-apt-city">${f.airport_destination_city || ''}</div></div>
+      </div>
+      <div class="pu-times">
+        <div class="pu-time-block">
+          <div class="pu-time-label">Abflug</div>
+          <div class="pu-time-val">${dep}</div>
+          <div class="pu-time-sub">${this._fmtTimeMap(f.time_scheduled_departure, f.airport_origin_timezone_offset)} geplant${depDelay}</div>
+        </div>
+        <div class="pu-time-block">
+          <div class="pu-time-label">Ankunft</div>
+          <div class="pu-time-val">${arr}</div>
+          <div class="pu-time-sub">${this._fmtTimeMap(f.time_scheduled_arrival, f.airport_destination_timezone_offset)} geplant${arrDelay}</div>
+        </div>
+      </div>
+      <div class="pu-sep"></div>
+      <div class="pu-rows">
+        <span class="pu-k">Höhe</span>    <span class="pu-v">${altFt} / ${altM}</span>
+        <span class="pu-k">Speed</span>   <span class="pu-v">${spd}</span>
+        <span class="pu-k">Kurs</span>    <span class="pu-v">${hdg}</span>
+        <span class="pu-k">V/S</span>     <span class="pu-v">${vs}</span>
+        <span class="pu-k">Distanz</span> <span class="pu-v">${dist}</span>
+      </div>
+      ${f.on_ground ? '<div class="pu-ground">⚠ Am Boden</div>' : ''}
+    </div>`;
+  }
+
+  _updateMarkers() {
+    if (!this._map || !window.L) return;
+    const flights = this._getFlights().filter(f => f.latitude != null && f.longitude != null);
+    const seen    = new Set();
+
+    for (const f of flights) {
+      const id    = f.id || f.aircraft_icao_24bit || f.flight_number;
+      const label = f.flight_number || f.callsign || id;
+      seen.add(id);
+
+      const icon  = this._makeAircraftIcon(f.heading, f.altitude, f.on_ground);
+      const popup = this._makePopup(f);
+
+      if (this._markers.has(id)) {
+        const { mk, lm } = this._markers.get(id);
+        mk.setLatLng([f.latitude, f.longitude]).setIcon(icon).setPopupContent(popup);
+        lm.setLatLng([f.latitude, f.longitude]);
+      } else {
+        const mk = window.L.marker([f.latitude, f.longitude], { icon, zIndexOffset: f.on_ground ? 0 : 200 })
+          .addTo(this._map)
+          .bindPopup(popup, { maxWidth: 270, closeOnClick: false });
+        const lm = window.L.marker([f.latitude, f.longitude], {
+          icon: window.L.divIcon({ html: `<div class="ac-lbl">${label}</div>`, className: '', iconAnchor: [-5, 9] }),
+          interactive: false, zIndexOffset: -9999,
+        }).addTo(this._map);
+        this._markers.set(id, { mk, lm });
+      }
+    }
+
+    for (const [id, { mk, lm }] of [...this._markers]) {
+      if (!seen.has(id)) { mk.remove(); lm.remove(); this._markers.delete(id); }
+    }
+
+    const cnt = this.shadowRoot.querySelector('.mcnt');
+    if (cnt) cnt.textContent = `✈ ${flights.length}`;
+  }
+
+  _mapCss() {
+    return `
+      :host { display: block; }
+      ha-card { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+
+      .mheader {
+        display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        padding: 10px 14px 6px;
+        font-size: 12px; font-weight: 500;
+        color: var(--secondary-text-color);
+        text-transform: uppercase; letter-spacing: 0.6px;
+      }
+      .mheader ha-icon { color: var(--primary-color); --mdc-icon-size: 16px; }
+
+      .mhud {
+        margin-left: auto;
+        background: rgba(11,17,32,0.82); border: 1px solid rgba(56,189,248,0.18);
+        border-radius: 20px; padding: 2px 9px;
+        font-family: ui-monospace,'SF Mono',monospace; font-size: 11px;
+        display: flex; align-items: center; gap: 5px; color: #7dd3fc;
+      }
+      .mlive {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #22c55e; flex-shrink: 0;
+        animation: blink 2s ease-in-out infinite;
+      }
+      @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+      .mwrap { flex: 1; min-height: 180px; position: relative; overflow: hidden; }
+      .mmap  { width: 100%; height: 100%; background: #0b1120; }
+
+      /* Zoom controls — dark theme */
+      .leaflet-control-zoom { border: none !important; box-shadow: none !important; margin: 8px 8px 0 0 !important; }
+      .leaflet-control-zoom a {
+        width: 26px !important; height: 26px !important; line-height: 26px !important;
+        background: rgba(11,17,32,0.88) !important; color: #7dd3fc !important;
+        border: 1px solid rgba(56,189,248,0.18) !important; border-radius: 5px !important;
+        margin-bottom: 2px !important;
+      }
+      .leaflet-control-zoom a:hover { background: rgba(30,41,59,0.98) !important; }
+
+      /* Aircraft label */
+      .ac-lbl {
+        color: #fde68a; font-family: ui-monospace,'SF Mono',monospace;
+        font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+        text-shadow: 0 0 5px #000, 0 0 5px #000;
+        white-space: nowrap; pointer-events: none;
+      }
+
+      /* Popup */
+      .leaflet-popup-content-wrapper {
+        background: rgba(11,17,32,0.97) !important; border: 1px solid rgba(56,189,248,0.22) !important;
+        border-radius: 12px !important; box-shadow: 0 8px 40px rgba(0,0,0,0.7) !important;
+        padding: 0 !important; overflow: hidden;
+      }
+      .leaflet-popup-content { margin: 0 !important; }
+      .leaflet-popup-tip-container { display: none !important; }
+      .leaflet-popup-close-button { color: #475569 !important; top: 8px !important; right: 10px !important; }
+      .leaflet-popup-close-button:hover { color: #94a3b8 !important; }
+
+      .pu { min-width: 220px; font-family: ui-monospace,'SF Mono',monospace; }
+      .pu-head { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px 8px; }
+      .pu-head-info { flex: 1; min-width: 0; }
+      .pu-fn { font-size: 15px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; }
+      .pu-airline { font-size: 10px; color: #64748b; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pu-photo { width: 60px; height: 38px; object-fit: cover; border-radius: 5px; border: 1px solid rgba(56,189,248,0.15); flex-shrink: 0; }
+
+      .pu-route { display: flex; align-items: center; padding: 0 14px 8px; }
+      .pu-apt { text-align: center; }
+      .pu-apt-code { font-size: 15px; font-weight: 800; color: #e2e8f0; letter-spacing: 1px; }
+      .pu-apt-city { font-size: 9px; color: #475569; margin-top: 1px; }
+      .pu-arrow { flex: 1; display: flex; align-items: center; padding: 0 6px; }
+      .pu-arrow-line { flex: 1; height: 1px; background: linear-gradient(90deg,rgba(56,189,248,0.3),rgba(56,189,248,0.6),rgba(56,189,248,0.3)); }
+      .pu-arrow-icon { font-size: 11px; color: #38bdf8; margin: 0 3px; }
+
+      .pu-times { display: flex; justify-content: space-between; padding: 0 14px 8px; }
+      .pu-time-block { text-align: center; }
+      .pu-time-label { font-size: 8px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+      .pu-time-val { font-size: 12px; font-weight: 700; color: #cbd5e1; margin-top: 1px; }
+      .pu-time-sub { font-size: 9px; color: #475569; margin-top: 1px; }
+      .delay { color: #f87171; }
+      .early { color: #34d399; }
+
+      .pu-sep { height: 1px; background: rgba(56,189,248,0.1); margin: 0 14px 8px; }
+      .pu-rows { padding: 0 14px 12px; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
+      .pu-k { font-size: 10px; color: #475569; align-self: center; }
+      .pu-v { font-size: 10px; color: #cbd5e1; text-align: right; align-self: center; }
+      .pu-ground { padding: 0 14px 10px; font-size: 10px; color: #f59e0b; }
+    `;
+  }
+}
+
+customElements.define('flightradar-card-map', FlightRadarMapCard);
+
+
 window.customCards = window.customCards || [];
 window.customCards.push({
   type:        'flightradar-card',
@@ -560,5 +920,11 @@ window.customCards.push({
   type:        'flightradar-card-compact',
   name:        'FlightRadar24 Card Compact',
   description: 'Zeigt Fluege kompakt aus einem FlightRadar24-Sensor an.',
+  preview:     false,
+});
+window.customCards.push({
+  type:        'flightradar-card-map',
+  name:        'FlightRadar24 Map',
+  description: 'Zeigt Fluege auf einer interaktiven Karte aus einem FlightRadar24-Sensor an.',
   preview:     false,
 });
