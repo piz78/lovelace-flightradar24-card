@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.1] - 2026-06-10
+
+### Fixed
+- All cards: airline badge now reads `airline_short`, `airline_short_name`,
+  `airline` in order — fixes badge always empty when sensor uses a different
+  field name than expected
+- Compact card: badge CSS threshold changed from `max-width: 500px` to
+  `max-width: 499px` — prevents ambiguous hide/show at exactly 500 px wide
+
+---
+
 ## [0.3.0] - 2026-06-10
 
 ### Added

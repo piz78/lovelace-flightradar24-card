@@ -130,7 +130,7 @@ const _BASE = (() => {
   return '/local';
 })();
 
-const _VERSION = '0.3.0';
+const _VERSION = '0.3.1';
 
 async function _loadLang(lang) {
   if (_CACHE[lang]) return _CACHE[lang];
@@ -346,7 +346,7 @@ class FlightRadarCard extends HTMLElement {
           <ha-icon icon="${this._flightIcon(f)}" class="icon-primary"></ha-icon>
           <span class="flight-number">${f.flight_number || '—'}</span>
           <span class="registration">${f.aircraft_registration || ''}</span>
-          <span class="airline-badge">${f.airline_short || ''}</span>
+          <span class="airline-badge">${f.airline_short || f.airline_short_name || f.airline || ''}</span>
         </div>
         <div class="aircraft-model">${f.aircraft_model || ''}</div>
         <div class="route">
@@ -371,7 +371,7 @@ class FlightRadarCard extends HTMLElement {
           <div class="compact-top">
             <span class="flight-number">${f.flight_number || '—'}</span>
             <span class="registration">${f.aircraft_registration || ''}</span>
-            <span class="airline-badge">${f.airline_short || ''}</span>
+            <span class="airline-badge">${f.airline_short || f.airline_short_name || f.airline || ''}</span>
           </div>
           <div class="compact-route">
             <span class="compact-city">${f.airport_origin_city || '—'} ${this._flag(f.airport_origin_country_code)}</span>
@@ -523,7 +523,7 @@ class FlightRadarCardCompact extends FlightRadarCard {
         <ha-icon icon="mdi:arrow-right" class="carrow"></ha-icon>
         <span class="ciata">${f.airport_destination_code_iata || f.airport_destination_iata || ''}</span>
         ${this._flag(f.airport_destination_country_code)}
-        <span class="cbadge">${f.airline_short || ''}</span>
+        <span class="cbadge">${f.airline_short || f.airline_short_name || f.airline || ''}</span>
       </div>`;
   }
 
@@ -649,10 +649,11 @@ class FlightRadarCardCompact extends FlightRadarCard {
 
       /* Progressive disclosure keyed to the custom element's own width (frc).
          Desktop 6-col ≈ 600 px, mobile 12-col ≈ 390 px, mobile 6-col ≈ 195 px.
-         >500px  : IATA code + flag + airline badge  (full)
-         160–500px : IATA code + flag                (no badge)
-         <160px  : flag only                         (no code, no badge) */
-      @container frc (max-width: 500px) {
+         ≥500px  : IATA code + flag + airline badge  (full)
+         160–499px : IATA code + flag                (no badge)
+         <160px  : flag only                         (no code, no badge)
+         499px avoids the exact-500px boundary where max-width:500px would fire. */
+      @container frc (max-width: 499px) {
         .cbadge { display: none; }
       }
       @container frc (max-width: 160px) {
