@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.8] - 2026-06-10
+
+### Fixed
+- Map card: reset button is now injected directly into Leaflet's `.leaflet-control-zoom`
+  element so it appears in the same visual group as + / − with identical styling
+
+### Added
+- All three cards: `preview: true` in `customCards` registration — HA now renders
+  a live preview of the card (using stub config) in the "Add to dashboard" picker
+
+---
+
 ## [0.2.7] - 2026-06-10
 
 ### Added
