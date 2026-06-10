@@ -8,6 +8,8 @@ A custom Lovelace card for Home Assistant that displays nearby flights from the
 [FlightRadar24 integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)
 in a clean, theme-aware UI.
 
+![Overview — full card and map side by side](images/flightradar-card-and-map.png)
+
 Three card types are available:
 
 | Type | Description |
@@ -22,53 +24,41 @@ Three card types are available:
 
 ### Full view (`flightradar-card`)
 
-```
-┌──────────────────────────────────────────────┐
-│ 〇 FLÜGE IM BEREICH                          │
-│                                               │
-│ ┌───────────────────────────────────────────┐ │
-│ │ ↗ LX1270                        [Swiss]   │ │
-│ │   Airbus A321-212                         │ │
-│ │  ┌─────────────────────────────────────┐  │ │
-│ │  │  Zurich 🇨🇭  ──›  Copenhagen 🇩🇰   │  │ │
-│ │  └─────────────────────────────────────┘  │ │
-│ │  ┌──────────┐ ┌──────────┐               │ │
-│ │  │ ABFLUG   │ │ ANKUNFT  │               │ │
-│ │  │  12:25   │ │  14:10   │               │ │
-│ │  └──────────┘ └──────────┘               │ │
-│ │  ┌──────────┐ ┌──────────┐               │ │
-│ │  │ FLUGHÖHE │ │ GESCHW.  │               │ │
-│ │  │  3'993 m │ │ 624 km/h │               │ │
-│ │  └──────────┘ └──────────┘               │ │
-│ └───────────────────────────────────────────┘ │
-└──────────────────────────────────────────────┘
-```
+![Full detail card](images/flightradar-card.png)
 
-### Compact view (`flightradar-card-compact`) — full width (`columns: 12`)
+Displays each flight with airline badge, aircraft model, origin/destination with
+flags, departure and arrival times, altitude, and ground speed.
 
-```
-┌─ FLÜGE IM BEREICH ──────────────────────────────────────────────────────────────┐
-│  ↗ LX1270  ZRH 🇨🇭 → CPH 🇩🇰  [Swiss]  │  ↙ LX1481  PRG 🇨🇿 → ZRH 🇨🇭  [Helvetic]  │
-└──────────────────────────────────────────────────────────────────────────────────┘
-```
+### Compact view (`flightradar-card-compact`)
 
-### Compact view — half width (`columns: 6`)
+The compact card adapts to the available card width using CSS container queries.
 
-```
-┌─ FLÜGE IM BEREICH ──────────────────┐
-│  ↗ LX1270  ZRH 🇨🇭 → CPH 🇩🇰        │
-│  ↙ LX1481  PRG 🇨🇿 → ZRH 🇨🇭        │
-│  ✈ TP930   LIS 🇵🇹 → GVA 🇨🇭        │
-└─────────────────────────────────────┘
-```
+**Wide layout** — all information visible (IATA codes + flags + airline badge):
+
+![Compact card — wide](images/flightradar-card-compact-wide.png)
+
+**Narrow layout** — badge hidden, IATA codes still visible:
+
+![Compact card — small](images/flightradar-card-compact-small.png)
 
 > **Icon legend:**  ↗ = departing from home airport · ↙ = arriving at home airport · ✈ = passing through
 
 ### Map view (`flightradar-card-map`)
 
-Interactive Leaflet map with a dark CartoDB tile layer. Aircraft are shown as
-SVG icons colored by altitude and rotated by heading. Click any icon to open a
-detailed popup with times, altitude, speed, heading, vertical speed, and distance.
+Interactive Leaflet map with OpenStreetMap tiles. Aircraft are shown as circular
+badge icons colored by altitude and rotated by heading.
+
+![Map card — overview](images/flightradar-card-map.png)
+
+Click any aircraft icon to open a detailed popup with flight number, airline,
+aircraft model, optional photo, origin/destination IATA codes and cities,
+departure/arrival times, altitude, ground speed, heading, vertical speed, and
+distance from your location.
+
+![Map card — flight info popup](images/flightradar-card-map-flightinfo.png)
+
+A **reset-view button** below the zoom controls (crosshair icon) returns the map
+to the center and zoom level configured in the card settings.
 
 ---
 
@@ -76,8 +66,8 @@ detailed popup with times, altitude, speed, heading, vertical speed, and distanc
 
 - **Full card view** — departure/arrival times, altitude, ground speed per flight
 - **Compact card** — single-line flights, designed for `rows: 1` dashboard tiles
-- **Map card** — interactive Leaflet map, dark theme, altitude-colored aircraft icons
-- **HA grid layout** — compact and map cards use `getGridOptions()` for native size control
+- **Map card** — interactive Leaflet map, altitude-colored aircraft icons, reset-view control
+- **HA grid layout** — all cards use `getGridOptions()` for native size control via the Layout tab
 - **Progressive display** — airport info adapts to available card width via CSS container queries
 - **Home airport awareness** — icon adapts based on flight direction
 - **Visual card editor** — no YAML needed, configure via the Lovelace UI
@@ -92,7 +82,7 @@ detailed popup with times, altitude, speed, heading, vertical speed, and distanc
 - Home Assistant 2023.0 or newer
 - [FlightRadar24 integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)
   installed and configured
-- **Compact card:** requires a **Sections**-layout dashboard for `grid_options` to take effect
+- **Compact and map cards:** require a **Sections**-layout dashboard for `grid_options` to take effect
 
 ---
 
@@ -107,7 +97,7 @@ detailed popup with times, altitude, speed, heading, vertical speed, and distanc
 4. Find **FlightRadar24 Card** → **Download**
 5. Reload your browser
 
-> Once the repository is listed in the HACS default store, step 2 and 3 are
+> Once the repository is listed in the HACS default store, steps 2 and 3 are
 > no longer needed.
 
 ### Manual
@@ -115,12 +105,11 @@ detailed popup with times, altitude, speed, heading, vertical speed, and distanc
 1. Download the latest release from the
    [Releases page](https://github.com/piz78/lovelace-flightradar24-card/releases)
 2. Copy `flightradar-card.js` to `/config/www/`
-3. Copy the `translations/` folder to `/config/www/translations/`
-4. Go to **Settings → Dashboards → Resources**
-5. Click **Add resource** and enter:
+3. Go to **Settings → Dashboards → Resources**
+4. Click **Add resource** and enter:
    - **URL:** `/local/flightradar-card.js`
    - **Type:** JavaScript module
-6. Reload your browser
+5. Reload your browser
 
 ---
 
@@ -174,10 +163,10 @@ lon: 8.77846
 zoom: 11
 grid_options:
   columns: 12
-  rows: 4
+  rows: 6
 ```
 
-The map card defaults to `columns: 12, rows: 4` and requires a **Sections**-layout
+The map card defaults to `columns: 12, rows: 6` and requires a **Sections**-layout
 dashboard. Leaflet is loaded once from CDN the first time a map card is rendered.
 
 ---
@@ -230,13 +219,13 @@ The compact card adapts airport labels to the available card width:
 
 | Card width | Displayed |
 |---|---|
-| > 500 px | IATA code + flag + airline badge |
-| 220–500 px | IATA code + flag |
-| < 220 px | Flag only |
+| ≥ 500 px | IATA code + flag + airline badge |
+| 160–499 px | IATA code + flag |
+| < 160 px | Flag only |
 
 > On a typical iPhone, 12 columns ≈ 390 px and 6 columns ≈ 195 px.
-> Desktop 6 columns ≈ 600 px — IATA codes are visible at all desktop sizes
-> and at mobile full width; flags only at mobile half width.
+> Desktop 6 columns ≈ 600 px — IATA codes and airline badges are visible at
+> all desktop sizes and at mobile full width; flags only at mobile half width.
 
 ---
 
