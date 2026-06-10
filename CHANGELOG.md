@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.9] - 2026-06-10
+
+### Added
+- Compact card: `ResizeObserver`-driven debug logging to console — logs host width
+  (`getBoundingClientRect` + `offsetWidth`), `container-type`, `container-name`,
+  computed `display` of `.ciata` and `.cbadge`, and `@container` browser support
+  on every resize to help diagnose container-query breakpoint issues
+
+---
+
 ## [0.2.8] - 2026-06-10
 
 ### Fixed

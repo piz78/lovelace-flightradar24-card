@@ -563,6 +563,33 @@ class FlightRadarCardCompact extends FlightRadarCard {
       card.style.cursor = hasAction ? 'pointer' : '';
       if (hasAction) card.addEventListener('click', this._tapHandler);
     }
+
+    // Start (or restart) the ResizeObserver so debug logs fire on every resize
+    if (this._debugRO) { this._debugRO.disconnect(); this._debugRO = null; }
+    this._debugRO = new ResizeObserver(() => this._logDebug());
+    this._debugRO.observe(this);
+    this._logDebug();
+  }
+
+  disconnectedCallback() {
+    if (this._debugRO) { this._debugRO.disconnect(); this._debugRO = null; }
+  }
+
+  _logDebug() {
+    if (!this.shadowRoot) return;
+    const rect   = this.getBoundingClientRect();
+    const host   = getComputedStyle(this);
+    const ciata  = this.shadowRoot.querySelector('.ciata');
+    const cbadge = this.shadowRoot.querySelector('.cbadge');
+    console.group('[flightradar-compact] breakpoint debug');
+    console.log('host width (getBCR)  :', Math.round(rect.width) + 'px   ← IATA hidden ≤160px | badge hidden ≤500px');
+    console.log('host offsetWidth     :', this.offsetWidth + 'px');
+    console.log('container-type       :', host.containerType  || '(empty — CSS not applied to :host!)');
+    console.log('container-name       :', host.containerName  || '(empty — CSS not applied to :host!)');
+    console.log('.ciata  display      :', ciata  ? getComputedStyle(ciata ).display  : 'no .ciata element in DOM');
+    console.log('.cbadge display      :', cbadge ? getComputedStyle(cbadge).display  : 'no .cbadge element in DOM');
+    console.log('@container support   :', CSS.supports('container-type', 'inline-size'));
+    console.groupEnd();
   }
 
   _css() {
