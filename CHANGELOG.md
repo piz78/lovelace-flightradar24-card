@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.0] - 2026-06-10
+
+### Added
+- Console badge on load: `✈ FLIGHTRADAR CARD   0.3.0` in aviation-blue pill
+  style, matching the pattern used by other popular HA custom cards
+- `_VERSION` constant (`'0.3.0'`) used in the badge — single source of truth
+  for the version string
+
+### Changed
+- Compact card debug logging (ResizeObserver / `_logDebug`) is now **off by
+  default** — enable by adding `debug: true` to the card config YAML or by
+  setting `window.flightradarCardDebug = true` in the browser console
+
+---
+
 ## [0.2.10] - 2026-06-10
 
 ### Fixed

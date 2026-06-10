@@ -130,6 +130,8 @@ const _BASE = (() => {
   return '/local';
 })();
 
+const _VERSION = '0.3.0';
+
 async function _loadLang(lang) {
   if (_CACHE[lang]) return _CACHE[lang];
   // DE/EN/FR/IT are pre-bundled above; this path handles custom languages only.
@@ -577,6 +579,7 @@ class FlightRadarCardCompact extends FlightRadarCard {
 
   _logDebug() {
     if (!this.shadowRoot) return;
+    if (!this.config?.debug && !window.flightradarCardDebug) return;
     const rect   = this.getBoundingClientRect();
     const host   = getComputedStyle(this);
     const ciata  = this.shadowRoot.querySelector('.ciata');
@@ -1104,3 +1107,9 @@ window.customCards.push({
   description: 'Zeigt Fluege auf einer interaktiven Karte aus einem FlightRadar24-Sensor an.',
   preview:     true,
 });
+
+console.info(
+  `%c ✈ FLIGHTRADAR CARD %c ${_VERSION} `,
+  'color:#fff;background:#0369a1;font-weight:700;padding:3px 6px;border-radius:4px 0 0 4px;font-family:monospace;font-size:11px;',
+  'color:#0369a1;background:#e0f2fe;font-weight:700;padding:3px 6px;border-radius:0 4px 4px 0;font-family:monospace;font-size:11px;'
+);
