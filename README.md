@@ -8,12 +8,13 @@ A custom Lovelace card for Home Assistant that displays nearby flights from the
 [FlightRadar24 integration](https://github.com/AlexandrErohin/home-assistant-flightradar24)
 in a clean, theme-aware UI.
 
-Two card types are available:
+Three card types are available:
 
 | Type | Description |
 |---|---|
 | `custom:flightradar-card` | Full detail view — times, altitude, speed per flight |
 | `custom:flightradar-card-compact` | Single-line view — designed for `rows: 1` dashboard tiles |
+| `custom:flightradar-card-map` | Interactive Leaflet map — aircraft icons colored by altitude |
 
 ---
 
@@ -63,13 +64,20 @@ Two card types are available:
 
 > **Icon legend:**  ↗ = departing from home airport · ↙ = arriving at home airport · ✈ = passing through
 
+### Map view (`flightradar-card-map`)
+
+Interactive Leaflet map with a dark CartoDB tile layer. Aircraft are shown as
+SVG icons colored by altitude and rotated by heading. Click any icon to open a
+detailed popup with times, altitude, speed, heading, vertical speed, and distance.
+
 ---
 
 ## Features
 
 - **Full card view** — departure/arrival times, altitude, ground speed per flight
 - **Compact card** — single-line flights, designed for `rows: 1` dashboard tiles
-- **HA grid layout** — compact card uses `getGridOptions()` for native size control
+- **Map card** — interactive Leaflet map, dark theme, altitude-colored aircraft icons
+- **HA grid layout** — compact and map cards use `getGridOptions()` for native size control
 - **Progressive display** — airport info adapts to available card width via CSS container queries
 - **Home airport awareness** — icon adapts based on flight direction
 - **Visual card editor** — no YAML needed, configure via the Lovelace UI
@@ -155,18 +163,43 @@ The `grid_options` key is a native HA property and controls the card size in the
 dashboard editor's **Layout** tab. The card defaults to `columns: 6, rows: 1`
 when added. The minimum is `columns: 6`.
 
+### Map card
+
+```yaml
+type: custom:flightradar-card-map
+entity: sensor.flightradar24_fluge_im_bereich
+home_airport: ZRH
+lat: 47.46305
+lon: 8.77846
+zoom: 11
+grid_options:
+  columns: 12
+  rows: 4
+```
+
+The map card defaults to `columns: 12, rows: 4` and requires a **Sections**-layout
+dashboard. Leaflet is loaded once from CDN the first time a map card is rendered.
+
 ---
 
 ## Options
 
-Both card types share the same configuration options:
+All card types share the base configuration options:
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `entity` | `string` | **required** | The FlightRadar24 sensor entity ID |
 | `title` | `string` | *(from language file)* | Card header title |
 | `home_airport` | `string` | — | IATA code **or** city name — e.g. `ZRH` or `Zurich` |
-| `tap_action` | `action` | — | Action to perform when the card is tapped |
+| `tap_action` | `action` | — | Action on tap (`flightradar-card` and `flightradar-card-compact` only) |
+
+### Additional options for `flightradar-card-map`
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `lat` | `number` | `47.46305` | Map center latitude |
+| `lon` | `number` | `8.77846` | Map center longitude |
+| `zoom` | `number` | `11` | Initial zoom level (1–18) |
 
 ### `home_airport` matching
 
@@ -234,11 +267,17 @@ translation files present.
     "entity":       "Entity",
     "title":        "Card title",
     "home_airport": "Home airport",
-    "tap_action":   "Tap action"
+    "tap_action":   "Tap action",
+    "lat":          "Map center latitude",
+    "lon":          "Map center longitude",
+    "zoom":         "Map zoom level"
   },
   "editor_helper": {
     "entity":       "FlightRadar24 sensor entity",
-    "home_airport": "IATA code or city name (e.g. ZRH or Zurich)"
+    "home_airport": "IATA code or city name (e.g. ZRH or Zurich)",
+    "lat":          "Latitude of the map center (e.g. 47.463)",
+    "lon":          "Longitude of the map center (e.g. 8.778)",
+    "zoom":         "Zoom level 1–18 (default 11)"
   },
   "card": {
     "title_default":    "Flights nearby",

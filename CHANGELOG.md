@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.2] - 2026-06-10
+
+### Added
+- `flightradar-card-map`: new standalone card type — displays nearby flights on an
+  interactive Leaflet map with dark CartoDB tile layer
+- SVG aircraft icons colored by altitude (ground / low / climb–descent / cruise)
+  and rotated by actual heading
+- Click a marker to open a detailed popup: flight number, airline, aircraft model,
+  optional aircraft photo, origin/destination IATA + city, departure/arrival times
+  with delay indicator, altitude (ft + m), ground speed, heading, vertical speed,
+  distance from sensor location
+- Map card editor fields: entity, title, home airport, center latitude, center
+  longitude, zoom level (1–18)
+- i18n keys for `lat`, `lon`, `zoom` added to all four translation files (DE, EN, FR, IT)
+
+---
+
 ## [0.2.1] - 2025-06-10
 
 ### Fixed
