@@ -620,12 +620,12 @@ class FlightRadarCardCompact extends FlightRadarCard {
       /* Progressive disclosure keyed to the custom element's own width (frc).
          Desktop 6-col ≈ 600 px, mobile 12-col ≈ 390 px, mobile 6-col ≈ 195 px.
          >500px  : IATA code + flag + airline badge  (full)
-         220–500px : IATA code + flag                (no badge)
-         <220px  : flag only                         (no code, no badge) */
+         160–500px : IATA code + flag                (no badge)
+         <160px  : flag only                         (no code, no badge) */
       @container frc (max-width: 500px) {
         .cbadge { display: none; }
       }
-      @container frc (max-width: 220px) {
+      @container frc (max-width: 160px) {
         .ciata { display: none; }
       }
 
@@ -794,6 +794,24 @@ class FlightRadarMapCard extends FlightRadarCard {
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       { maxZoom: 19, attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>' }
     ).addTo(this._map);
+
+    // Reset-view control — returns map to the configured center/zoom.
+    const card = this;
+    const ResetControl = window.L.Control.extend({
+      onAdd(map) {
+        const btn = window.L.DomUtil.create('div', 'mresetbtn');
+        btn.title = 'Ausgangsposition';
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>';
+        window.L.DomEvent.on(btn, 'click', e => {
+          window.L.DomEvent.stopPropagation(e);
+          window.L.DomEvent.preventDefault(e);
+          map.setView([card.config.lat ?? 47.46305, card.config.lon ?? 8.77846], card.config.zoom ?? 11);
+        });
+        return btn;
+      },
+      onRemove() {},
+    });
+    new ResetControl({ position: 'topleft' }).addTo(this._map);
 
     // Force a size recalculation — Leaflet may have initialized with 0×0 dimensions
     // if the shadow root wasn't fully laid out yet.
@@ -984,6 +1002,17 @@ class FlightRadarMapCard extends FlightRadarCard {
         background: rgba(255,255,255,0.75) !important;
       }
 
+      /* Reset-view button — same style as zoom controls */
+      .mresetbtn {
+        width: 28px !important; height: 28px !important;
+        background: var(--card-background-color,#fff) !important;
+        border: 1px solid var(--divider-color) !important;
+        border-radius: 6px !important; margin-top: 2px !important;
+        display: flex !important; align-items: center; justify-content: center;
+        cursor: pointer; color: var(--primary-color);
+      }
+      .mresetbtn:hover { opacity: 0.7; }
+
       /* Aircraft call-sign label — white pill for contrast on any tile style */
       .ac-lbl {
         display: inline-block;
@@ -1045,19 +1074,19 @@ customElements.define('flightradar-card-map', FlightRadarMapCard);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type:        'flightradar-card',
-  name:        'FlightRadar24 Card',
+  name:        'Flightradar Card',
   description: 'Zeigt Fluege aus einem FlightRadar24-Sensor uebersichtlich an.',
   preview:     false,
 });
 window.customCards.push({
   type:        'flightradar-card-compact',
-  name:        'FlightRadar24 Card Compact',
+  name:        'Flightradar Card Compact',
   description: 'Zeigt Fluege kompakt aus einem FlightRadar24-Sensor an.',
   preview:     false,
 });
 window.customCards.push({
   type:        'flightradar-card-map',
-  name:        'FlightRadar24 Map',
+  name:        'Flightradar Card Map',
   description: 'Zeigt Fluege auf einer interaktiven Karte aus einem FlightRadar24-Sensor an.',
   preview:     false,
 });

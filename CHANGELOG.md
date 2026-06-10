@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.7] - 2026-06-10
+
+### Added
+- Map card: reset-view control button below the zoom controls — crosshair icon,
+  returns the map to the center/zoom configured in the card settings
+
+### Fixed
+- Compact card: IATA threshold lowered from 220 px to 160 px — codes now show
+  at 6-column mobile width (≈195 px); flags-only only kicks in below 160 px
+- HACS / card picker: all three card names updated to "Flightradar Card",
+  "Flightradar Card Compact", "Flightradar Card Map"
+
+---
+
 ## [0.2.6] - 2026-06-10
 
 ### Added
