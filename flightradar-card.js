@@ -32,7 +32,92 @@ const _FALLBACK = {
   },
 };
 
-const _CACHE = { en: _FALLBACK };
+// All supported languages are bundled inline so HACS single-file distribution
+// works without downloading the translations/ folder separately.
+const _CACHE = {
+  en: _FALLBACK,
+  de: {
+    editor: {
+      entity:       'Entity',
+      title:        'Kartentitel',
+      home_airport: 'Heimflughafen',
+      tap_action:   'Tippen-Aktion',
+      lat:          'Karte Mittelpunkt Breitengrad',
+      lon:          'Karte Mittelpunkt Längengrad',
+      zoom:         'Kartenausschnitt',
+    },
+    editor_helper: {
+      entity:       'FlightRadar24 Sensor-Entity',
+      home_airport: 'IATA-Code oder Stadtname (z. B. ZRH oder Zürich)',
+      lat:          'Breitengrad des Kartenzentrums (z. B. 47.463)',
+      lon:          'Längengrad des Kartenzentrums (z. B. 8.778)',
+      zoom:         'Zoomstufe 1–18 (Standard 11)',
+    },
+    card: {
+      title_default:    'Flüge im Bereich',
+      no_flights:       'Keine Flüge im Bereich',
+      entity_not_found: 'Entity nicht gefunden',
+      departure:        'Abflug',
+      arrival:          'Ankunft',
+      altitude:         'Flughöhe',
+      speed:            'Geschw.',
+    },
+  },
+  fr: {
+    editor: {
+      entity:       'Entité',
+      title:        'Titre de la carte',
+      home_airport: 'Aéroport local',
+      tap_action:   'Action au toucher',
+      lat:          'Latitude du centre de la carte',
+      lon:          'Longitude du centre de la carte',
+      zoom:         'Niveau de zoom',
+    },
+    editor_helper: {
+      entity:       'Entité du capteur FlightRadar24',
+      home_airport: 'Code IATA ou nom de ville (ex. GVA ou Genève)',
+      lat:          'Latitude du centre de la carte (ex. 47.463)',
+      lon:          'Longitude du centre de la carte (ex. 8.778)',
+      zoom:         'Niveau de zoom 1–18 (défaut 11)',
+    },
+    card: {
+      title_default:    'Vols à proximité',
+      no_flights:       'Aucun vol dans la zone',
+      entity_not_found: 'Entité introuvable',
+      departure:        'Départ',
+      arrival:          'Arrivée',
+      altitude:         'Altitude',
+      speed:            'Vitesse',
+    },
+  },
+  it: {
+    editor: {
+      entity:       'Entità',
+      title:        'Titolo della scheda',
+      home_airport: 'Aeroporto di casa',
+      tap_action:   'Azione al tocco',
+      lat:          'Latitudine del centro della mappa',
+      lon:          'Longitudine del centro della mappa',
+      zoom:         'Livello di zoom',
+    },
+    editor_helper: {
+      entity:       'Entità del sensore FlightRadar24',
+      home_airport: 'Codice IATA o nome della città (es. ZRH o Zurigo)',
+      lat:          'Latitudine del centro della mappa (es. 47.463)',
+      lon:          'Longitudine del centro della mappa (es. 8.778)',
+      zoom:         'Livello di zoom 1–18 (predefinito 11)',
+    },
+    card: {
+      title_default:    'Voli nelle vicinanze',
+      no_flights:       "Nessun volo nell'area",
+      entity_not_found: 'Entità non trovata',
+      departure:        'Partenza',
+      arrival:          'Arrivo',
+      altitude:         'Quota',
+      speed:            'Velocità',
+    },
+  },
+};
 
 // Resolve the folder containing flightradar-card.js so translations can be
 // placed right next to it regardless of where the file is served from.
@@ -47,12 +132,13 @@ const _BASE = (() => {
 
 async function _loadLang(lang) {
   if (_CACHE[lang]) return _CACHE[lang];
+  // DE/EN/FR/IT are pre-bundled above; this path handles custom languages only.
   try {
     const r = await fetch(`${_BASE}/translations/flightradar-card.${lang}.json`);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     _CACHE[lang] = await r.json();
   } catch {
-    _CACHE[lang] = lang !== 'en' ? await _loadLang('en') : _FALLBACK;
+    _CACHE[lang] = _FALLBACK;
   }
   return _CACHE[lang];
 }
