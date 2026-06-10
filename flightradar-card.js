@@ -517,12 +517,14 @@ class FlightRadarCardCompact extends FlightRadarCard {
 
       /* Progressive disclosure as card width shrinks:
          >560px : IATA code + flag + airline badge (full)
-         420–560px : IATA code + flag              (no badge)
-         <420px  : flag only                       (no code, no badge) */
+         280–560px : IATA code + flag              (no badge)
+         <280px  : flag only                       (no code, no badge)
+         Note: on a typical iPhone, 12 columns ≈ 390px and 6 columns ≈ 195px,
+         so 280px sits between them — IATA shows at full width, hides at half. */
       @container (max-width: 560px) {
         .cbadge { display: none; }
       }
-      @container (max-width: 420px) {
+      @container (max-width: 280px) {
         .ciata { display: none; }
       }
 
