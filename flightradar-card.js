@@ -471,7 +471,13 @@ class FlightRadarCardCompact extends FlightRadarCard {
 
   _css() {
     return super._css() + `
-      ha-card { container-type: inline-size; }
+      /* Anchor the container query to the custom element itself so it
+         measures our card's actual rendered width, not an HA ancestor. */
+      :host {
+        display: block;
+        container-type: inline-size;
+        container-name: frc;
+      }
 
       .cheader {
         display: flex; align-items: center; gap: 6px;
@@ -515,16 +521,15 @@ class FlightRadarCardCompact extends FlightRadarCard {
         padding: 1px 7px; border-radius: 20px;
       }
 
-      /* Progressive disclosure as card width shrinks:
-         >560px : IATA code + flag + airline badge (full)
-         280–560px : IATA code + flag              (no badge)
-         <280px  : flag only                       (no code, no badge)
-         Note: on a typical iPhone, 12 columns ≈ 390px and 6 columns ≈ 195px,
-         so 280px sits between them — IATA shows at full width, hides at half. */
-      @container (max-width: 560px) {
+      /* Progressive disclosure keyed to the custom element's own width (frc).
+         Desktop 6-col ≈ 600 px, mobile 12-col ≈ 390 px, mobile 6-col ≈ 195 px.
+         >500px  : IATA code + flag + airline badge  (full)
+         220–500px : IATA code + flag                (no badge)
+         <220px  : flag only                         (no code, no badge) */
+      @container frc (max-width: 500px) {
         .cbadge { display: none; }
       }
-      @container (max-width: 280px) {
+      @container frc (max-width: 220px) {
         .ciata { display: none; }
       }
 

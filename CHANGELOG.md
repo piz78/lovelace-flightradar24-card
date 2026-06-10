@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.1] - 2025-06-10
+
+### Fixed
+- Compact card: container queries now anchor to `:host` with a named container
+  (`frc`) instead of `ha-card`, preventing HA's own ancestor containers from
+  being used as the measurement reference — IATA codes were incorrectly hidden
+  at all card widths on all devices
+- Breakpoints adjusted: badge hidden below 500 px, IATA codes hidden below
+  220 px (flags only at mobile 6-col ≈ 195 px; codes visible everywhere else)
+
+---
+
 ## [0.2.0] - 2025-06-09
 
 ### Added

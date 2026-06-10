@@ -197,12 +197,13 @@ The compact card adapts airport labels to the available card width:
 
 | Card width | Displayed |
 |---|---|
-| > 560 px | IATA code + flag + airline badge |
-| 280–560 px | IATA code + flag |
-| < 280 px | Flag only |
+| > 500 px | IATA code + flag + airline badge |
+| 220–500 px | IATA code + flag |
+| < 220 px | Flag only |
 
-> On a typical iPhone, 12 columns ≈ 390 px and 6 columns ≈ 195 px —
-> IATA codes are visible at full width and hidden at half width.
+> On a typical iPhone, 12 columns ≈ 390 px and 6 columns ≈ 195 px.
+> Desktop 6 columns ≈ 600 px — IATA codes are visible at all desktop sizes
+> and at mobile full width; flags only at mobile half width.
 
 ---
 
